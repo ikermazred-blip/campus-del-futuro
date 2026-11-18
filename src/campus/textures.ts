@@ -18,7 +18,10 @@ export type TexKind =
   | "hedge"
   | "soil"
   | "court"
-  | "metalRoof";
+  | "metalRoof"
+  | "floorWood"
+  | "linoleum"
+  | "carpet";
 
 /** Metres covered by one texture tile — used to scale UVs. */
 export const TILE: Record<TexKind, number> = {
@@ -38,6 +41,9 @@ export const TILE: Record<TexKind, number> = {
   soil: 2,
   court: 1,
   metalRoof: 2,
+  floorWood: 2.4,
+  linoleum: 3,
+  carpet: 2,
 };
 
 const cache = new Map<TexKind, THREE.CanvasTexture>();
@@ -235,6 +241,52 @@ function draw(kind: TexKind): HTMLCanvasElement {
       }
       break;
     }
+    case "floorWood": {
+      const ph = S / 8;
+      for (let row = 0; row < 8; row++) {
+        const off = (row * 137) % S;
+        for (let x = -S; x < S * 2; x += S / 2) {
+          const t = r();
+          ctx.fillStyle = `rgb(${168 + t * 30},${118 + t * 22},${74 + t * 14})`;
+          ctx.fillRect(x + off, row * ph, S / 2, ph);
+          ctx.fillStyle = "rgba(60,35,15,0.5)";
+          ctx.fillRect(x + off, row * ph, 2, ph);
+        }
+        ctx.fillStyle = "rgba(60,35,15,0.45)";
+        ctx.fillRect(0, row * ph, S, 2);
+      }
+      for (let k = 0; k < 500; k++) {
+        ctx.strokeStyle = `rgba(90,55,25,${0.05 + r() * 0.1})`;
+        const y = r() * S;
+        ctx.beginPath();
+        ctx.moveTo(r() * S, y);
+        ctx.lineTo(r() * S, y + (r() - 0.5) * 3);
+        ctx.stroke();
+      }
+      break;
+    }
+    case "linoleum": {
+      ctx.fillStyle = "#c9ccc6";
+      ctx.fillRect(0, 0, S, S);
+      speckle(ctx, S, 9000, ["#b3b7b0", "#dcdfd8", "#a9aea7"], r, 2);
+      ctx.strokeStyle = "rgba(90,95,90,0.25)";
+      ctx.lineWidth = 2;
+      for (let i = 0; i <= S; i += S / 2) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, S);
+        ctx.moveTo(0, i);
+        ctx.lineTo(S, i);
+        ctx.stroke();
+      }
+      break;
+    }
+    case "carpet": {
+      ctx.fillStyle = "#8f8a82";
+      ctx.fillRect(0, 0, S, S);
+      speckle(ctx, S, 26000, ["#7d7870", "#a39e95", "#888279"], r, 1.4);
+      break;
+    }
     case "court": {
       const [cc, cx] = makeCanvas(512, 1024);
       cx.fillStyle = "#6d9a8a";
@@ -411,6 +463,154 @@ export function makeCampusSignTexture() {
   t.anisotropy = 8;
   document.fonts
     ?.load(`600 64px "Fraunces"`)
+    .then(() => {
+      paint();
+      t.needsUpdate = true;
+    })
+    .catch(() => {});
+  return t;
+}
+
+export interface PanelOptions {
+  width: number;
+  height: number;
+  bg: string;
+  fg: string;
+  title?: string;
+  lines?: string[];
+  font?: "chalk" | "sans" | "serif";
+  /** draws a simple week planner grid */
+  planner?: boolean;
+  accent?: string;
+}
+
+/** Wall boards, slides, screens and posters drawn on a canvas. */
+export function makePanelTexture(o: PanelOptions) {
+  const W = 1024;
+  const H = Math.round((W * o.height) / o.width);
+  const [c, ctx] = makeCanvas(W, H);
+  const family =
+    o.font === "serif" ? `"Fraunces", Georgia, serif` : o.font === "chalk" ? `"Segoe Print", "Comic Neue", "Manrope", sans-serif` : FONT;
+  const paint = () => {
+    ctx.fillStyle = o.bg;
+    ctx.fillRect(0, 0, W, H);
+    if (o.font === "chalk") {
+      const r = seeded(5);
+      for (let i = 0; i < 400; i++) {
+        ctx.fillStyle = `rgba(255,255,255,${r() * 0.05})`;
+        ctx.fillRect(r() * W, r() * H, 30 + r() * 80, 2 + r() * 6);
+      }
+    }
+    const pad = W * 0.06;
+    let y = pad;
+    ctx.fillStyle = o.fg;
+    ctx.textBaseline = "top";
+    ctx.textAlign = "left";
+    if (o.title) {
+      const size = Math.round(Math.min(H * 0.16, W * 0.075));
+      ctx.font = `700 ${size}px ${family}`;
+      ctx.fillText(o.title, pad, y);
+      y += size * 1.45;
+      if (o.accent) {
+        ctx.fillStyle = o.accent;
+        ctx.fillRect(pad, y - size * 0.3, W * 0.18, Math.max(4, size * 0.08));
+        ctx.fillStyle = o.fg;
+      }
+    }
+    if (o.planner) {
+      const cols = ["Lun", "Mar", "Mié", "Jue", "Vie"];
+      const gx = pad;
+      const gw = W - pad * 2;
+      const gh = H - y - pad;
+      const cw = gw / cols.length;
+      ctx.strokeStyle = o.fg;
+      ctx.globalAlpha = 0.35;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(gx, y, gw, gh);
+      for (let i = 1; i < cols.length; i++) {
+        ctx.beginPath();
+        ctx.moveTo(gx + i * cw, y);
+        ctx.lineTo(gx + i * cw, y + gh);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      const hs = Math.round(gh * 0.1);
+      ctx.font = `700 ${hs}px ${FONT}`;
+      cols.forEach((t, i) => ctx.fillText(t, gx + i * cw + cw * 0.12, y + hs * 0.4));
+      const colors = ["#c2573a", "#2f7f8f", "#3d7a4a", "#d9a33a", "#7a4f8a"];
+      const r = seeded(11);
+      for (let i = 0; i < cols.length; i++) {
+        let by = y + hs * 2;
+        const n = 1 + Math.floor(r() * 3);
+        for (let k = 0; k < n; k++) {
+          const bh = gh * (0.12 + r() * 0.14);
+          ctx.fillStyle = colors[(i + k) % colors.length] ?? "#c2573a";
+          ctx.fillRect(gx + i * cw + cw * 0.1, by, cw * 0.8, bh);
+          by += bh + gh * 0.05;
+          if (by > y + gh - gh * 0.1) break;
+        }
+      }
+      ctx.fillStyle = o.fg;
+    }
+    if (o.lines?.length) {
+      const size = Math.round(Math.min((H - y - pad) / (o.lines.length * 1.5), W * 0.055));
+      ctx.font = `${o.font === "chalk" ? 600 : 500} ${size}px ${family}`;
+      for (const line of o.lines) {
+        ctx.fillText(line, pad, y);
+        y += size * 1.5;
+      }
+    }
+  };
+  paint();
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  document.fonts
+    ?.load(`700 48px "Manrope"`)
+    .then(() => {
+      paint();
+      t.needsUpdate = true;
+    })
+    .catch(() => {});
+  return t;
+}
+
+/** Floating name label above a character. */
+export function makeLabelTexture(name: string, hint: string, accent: string) {
+  const W = 1024;
+  const H = 256;
+  const [c, ctx] = makeCanvas(W, H);
+  const paint = () => {
+    ctx.clearRect(0, 0, W, H);
+    const r = 60;
+    ctx.fillStyle = "rgba(251,247,239,0.96)";
+    ctx.beginPath();
+    ctx.roundRect(8, 8, W - 16, H - 16, r);
+    ctx.fill();
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.roundRect(8, H - 34, W - 16, 26, [0, 0, r, r]);
+    ctx.fill();
+    ctx.fillStyle = "#1f2b27";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    let size = 84;
+    ctx.font = `800 ${size}px ${FONT}`;
+    while (ctx.measureText(name).width > W - 80 && size > 30) {
+      size -= 4;
+      ctx.font = `800 ${size}px ${FONT}`;
+    }
+    ctx.fillText(name, W / 2, H * 0.4);
+    ctx.font = `600 44px ${FONT}`;
+    ctx.fillStyle = "#55605b";
+    ctx.fillText(hint, W / 2, H * 0.72);
+  };
+  paint();
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  document.fonts
+    ?.load(`800 64px "Manrope"`)
     .then(() => {
       paint();
       t.needsUpdate = true;
