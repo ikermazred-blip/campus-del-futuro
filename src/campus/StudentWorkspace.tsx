@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { SUBJECTS } from "./subjects";
+import { getSubjectTutor, TUTOR_MODES } from "./subjectTutors";
 import { BookOpen, CalendarDays, ChartNoAxesCombined, FileText, Plus, Trash2, Copy, GraduationCap } from "lucide-react";
 
 type Tab = "subjects" | "agenda" | "progress" | "library";
@@ -142,6 +144,8 @@ export function StudentWorkspace({ initialTab = "subjects", embedded = false }: 
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => { const d = new Date(weekStart); d.setDate(d.getDate() + i); return d; }), [weekStart]);
   const sortedEvents = [...events].sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
   const completed = records.filter((r) => r.status === "estudiado").length;
+  const campusSubject = SUBJECTS.find((subject) => subject.name === selectedSubject);
+  const gem = campusSubject ? getSubjectTutor(campusSubject.id) : null;
 
   const addSubject = () => {
     const name = newSubject.trim();
@@ -190,9 +194,30 @@ export function StudentWorkspace({ initialTab = "subjects", embedded = false }: 
 
       {tab === "subjects" && <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
         <aside className="rounded-2xl border bg-card p-4"><h3 className="font-semibold">Asignaturas</h3><div className="mt-3 space-y-1">{subjects.map(s => <div key={s.id} className="flex gap-1"><button onClick={() => setSelectedSubject(s.name)} className={`min-w-0 flex-1 rounded-lg px-3 py-2 text-left text-sm ${selectedSubject===s.name ? "bg-primary/10 font-semibold text-primary" : "hover:bg-muted"}`}>{s.name}</button><button aria-label={`Eliminar ${s.name}`} onClick={() => { const renamed = prompt("Nuevo nombre de la asignatura", s.name)?.trim(); if (renamed && renamed !== s.name && !subjects.some(x => x.id !== s.id && x.name.toLocaleLowerCase("es") === renamed.toLocaleLowerCase("es"))) { setSubjects(v => v.map(x => x.id === s.id ? { ...x, name: renamed } : x)); setEvents(v => v.map(x => x.subject === s.name ? { ...x, subject: renamed } : x)); setRecords(v => v.map(x => x.subject === s.name ? { ...x, subject: renamed } : x)); setDocs(v => v.map(x => x.subject === s.name ? { ...x, subject: renamed } : x)); if (selectedSubject === s.name) setSelectedSubject(renamed); } }} title="Renombrar asignatura" className="rounded-lg px-2 text-muted-foreground hover:bg-muted">✎</button><button aria-label={`Eliminar ${s.name}`} onClick={() => { if (confirm(`¿Eliminar la asignatura ${s.name}? Se conservarán los registros y archivos históricos.`)) setSubjects(v => v.filter(x => x.id!==s.id)); }} className="rounded-lg px-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Trash2 size={15}/></button></div>)}</div><div className="mt-4 flex gap-2"><input value={newSubject} onChange={e=>setNewSubject(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addSubject()} placeholder="Nueva asignatura" className="min-w-0 w-full rounded-lg border bg-background px-3 py-2 text-sm"/><button onClick={addSubject} aria-label="Añadir asignatura" className="rounded-lg bg-primary px-3 text-primary-foreground"><Plus size={17}/></button></div></aside>
-        <div className="rounded-2xl border bg-card p-5 sm:p-6"><div className="flex flex-wrap items-center justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Espacios de tutoría</p><h3 className="mt-1 text-2xl font-semibold">{selectedSubject}</h3></div><GraduationCap className="text-primary" size={30}/></div><div className="mt-4 flex flex-wrap gap-2">{TUTORS.map(t => <button key={t} onClick={()=>setSelectedTutor(t)} className={`rounded-lg border px-3 py-2 text-sm ${selectedTutor===t ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted"}`}>{t}</button>)}</div><div className="mt-5 rounded-xl bg-muted/50 p-4"><h4 className="font-semibold">{selectedTutor} · {selectedSubject}</h4><p className="mt-2 text-sm text-muted-foreground">{selectedTutor==="Profesor particular" ? "Explicaciones de teoría y resolución de dudas paso a paso." : selectedTutor==="Entrenador de ejercicios" ? "Práctica gradual, corrección del procedimiento y detección de errores." : selectedTutor==="Preparador de exámenes" ? "Simulacros, corrección, puntuación y feedback." : "Trabajo con tus documentos para resumir y esquematizar el contenido."}</p><div className="mt-4 rounded-lg border border-amber-300/70 bg-amber-50 p-3 text-sm text-amber-950"><strong>Conexión de IA pendiente.</strong> Este espacio todavía no genera respuestas automáticas. No vamos a simular un tutor real hasta configurar un proveedor seguro en servidor.</div><label className="mt-4 block text-sm font-semibold" htmlFor="tutor-question">Prepara tu consulta</label><textarea id="tutor-question" value={question} onChange={e=>setQuestion(e.target.value)} rows={4} placeholder="Escribe la duda, ejercicio o tema que quieres trabajar…" className="mt-2 w-full rounded-lg border bg-background p-3 text-sm"/><button disabled={!question.trim()} onClick={()=>{void navigator.clipboard?.writeText(`Asignatura: ${selectedSubject}
-Tutor: ${selectedTutor}
-Consulta: ${question}`);setNotice("Consulta copiada. Puedes pegarla en tu herramienta de IA.");}} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-40"><Copy size={16}/>Copiar consulta</button></div></div>
+        <div className="rounded-2xl border bg-card p-5 sm:p-6"><div className="flex flex-wrap items-center justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Espacios de tutoría</p><h3 className="mt-1 text-2xl font-semibold">{selectedSubject}</h3></div><GraduationCap className="text-primary" size={30}/></div><div className="mt-4 flex flex-wrap gap-2">{TUTORS.map(t => <button key={t} onClick={()=>setSelectedTutor(t)} className={`rounded-lg border px-3 py-2 text-sm ${selectedTutor===t ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted"}`}>{t}</button>)}</div><div className="mt-5 rounded-xl bg-muted/50 p-4">
+          <h4 className="font-semibold">{selectedTutor} · {selectedSubject}</h4>
+          <p className="mt-2 text-sm text-muted-foreground">{TUTORS.includes(selectedTutor) ? TUTOR_MODES.find((mode) => mode.title === selectedTutor)?.description : ""}</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {TUTOR_MODES.map((mode) => (
+              <button key={mode.title} onClick={() => setSelectedTutor(mode.title as Tutor)} className={`rounded-xl border p-3 text-left transition ${selectedTutor === mode.title ? "border-primary bg-primary/10" : "bg-card hover:border-primary/50"}`}>
+                <span className="block font-semibold">{mode.title}</span>
+                <span className="mt-1 block text-sm text-muted-foreground">{mode.description}</span>
+              </button>
+            ))}
+          </div>
+          {gem ? (
+            <div className="mt-4 rounded-xl border bg-card p-4">
+              <p className="text-sm font-semibold">{gem.name}</p>
+              <p className="mt-1 text-sm text-muted-foreground">Los cuatro modos utilizan este mismo Gem especializado. Al abrirlo, selecciona el modo anterior y continúa allí tu consulta.</p>
+              <a href={gem.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">Abrir tutor de {selectedSubject} <span aria-hidden>↗</span></a>
+            </div>
+          ) : (
+            <p className="mt-4 rounded-lg border p-3 text-sm text-muted-foreground">Esta asignatura personalizada todavía no tiene un Gem enlazado.</p>
+          )}
+          <label className="mt-4 block text-sm font-semibold" htmlFor="tutor-question">Prepara tu consulta</label>
+          <textarea id="tutor-question" value={question} onChange={e=>setQuestion(e.target.value)} rows={3} placeholder="Escribe aquí lo que quieres trabajar antes de abrir el Gem…" className="mt-2 w-full rounded-lg border bg-background p-3 text-sm"/>
+          <button disabled={!question.trim()} onClick={()=>{void navigator.clipboard?.writeText(`Asignatura: ${selectedSubject}\nModo: ${selectedTutor}\nConsulta: ${question}`);setNotice("Consulta copiada. Pégala en el Gem al abrirlo.");}} className="mt-3 inline-flex items-center gap-2 rounded-lg border bg-card px-4 py-2.5 text-sm font-semibold disabled:opacity-40"><Copy size={16}/>Copiar consulta</button>
+        </div></div>
       </div>}
 
       {tab === "agenda" && <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
