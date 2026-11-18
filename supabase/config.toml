@@ -1,0 +1,4 @@
+project_id = "school-ai-world"
+
+[functions.chat]
+verify_jwt = true
