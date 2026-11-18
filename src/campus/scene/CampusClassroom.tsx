@@ -55,10 +55,10 @@ export const CampusClassroom = memo(function CampusClassroom({ name, accent }: P
       </mesh>
       {/* subject identity sign above the window */}
       <mesh position={[0, 3.83, -8.57]} castShadow>
-        <boxGeometry args={[8.2, 0.62, 0.16]} />
+        <boxGeometry args={[8.2, 0.72, 0.18]} />
         <meshStandardMaterial color={accent} roughness={0.56} metalness={0.08} />
       </mesh>
-      <Text position={[0, 3.82, -8.47]} fontSize={0.34} maxWidth={7.7} textAlign="center" anchorX="center" anchorY="middle" color="#ffffff" outlineWidth={0.006} outlineColor="#26343b">
+      <Text position={[0, 3.82, -8.45]} fontSize={0.4} maxWidth={7.7} textAlign="center" anchorX="center" anchorY="middle" color="#ffffff" outlineWidth={0.006} outlineColor="#26343b">
         {name.toLocaleUpperCase("es")}
       </Text>
       {/* side wall whiteboard, marker tray and notice panel */}

@@ -594,15 +594,15 @@ export function makeLabelTexture(name: string, hint: string, accent: string) {
     ctx.fillStyle = "#1f2b27";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    let size = 84;
+    let size = 104;
     ctx.font = `800 ${size}px ${FONT}`;
     while (ctx.measureText(name).width > W - 80 && size > 30) {
       size -= 4;
       ctx.font = `800 ${size}px ${FONT}`;
     }
     ctx.fillText(name, W / 2, H * 0.4);
-    ctx.font = `600 44px ${FONT}`;
-    ctx.fillStyle = "#55605b";
+    ctx.font = `700 52px ${FONT}`;
+    ctx.fillStyle = "#394640";
     ctx.fillText(hint, W / 2, H * 0.72);
   };
   paint();

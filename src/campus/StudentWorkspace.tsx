@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SUBJECTS, type SubjectId } from "./subjects";
 import { getSubjectTutor, TUTOR_MODES } from "./subjectTutors";
 import { BookOpen, CalendarDays, ChartNoAxesCombined, FileText, Plus, Trash2, Copy, GraduationCap } from "lucide-react";
@@ -125,6 +125,8 @@ export function StudentWorkspace({ initialTab = "subjects", embedded = false, vi
   const [fileSubject, setFileSubject] = useState(DEFAULT_SUBJECTS[0] ?? "Matemáticas");
   const [weekOffset, setWeekOffset] = useState(0);
   const [notice, setNotice] = useState("");
+  const persistenceRef = useRef({ subjects, events, records, docs });
+  persistenceRef.current = { subjects, events, records, docs };
   const visibleSubjects = useMemo(
     () => subjects.filter((item) => {
       const campusSubject = SUBJECTS.find((subject) => subject.name === item.name);
@@ -152,6 +154,25 @@ export function StudentWorkspace({ initialTab = "subjects", embedded = false, vi
   useEffect(() => {
     if (loaded) localStorage.setItem(STORAGE_KEY, JSON.stringify({ subjects, events, records, docs }));
   }, [loaded, subjects, events, records, docs]);
+  useEffect(() => {
+    if (!loaded) return;
+    const persistBeforeExit = () => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(persistenceRef.current));
+      } catch {
+        // Keep the current session usable if browser storage is unavailable or full.
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") persistBeforeExit();
+    };
+    window.addEventListener("pagehide", persistBeforeExit);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("pagehide", persistBeforeExit);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [loaded]);
 
   const weekStart = useMemo(() => {
     const d = mondayOf(todayInMadrid()); d.setDate(d.getDate() + weekOffset * 7); return d;
@@ -236,7 +257,7 @@ export function StudentWorkspace({ initialTab = "subjects", embedded = false, vi
       </div>}
 
       {tab === "agenda" && <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
-        <div className="rounded-2xl border bg-card p-4 sm:p-5"><div className="mb-4 flex items-center justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Calendario semanal</p><h3 className="text-xl font-semibold">{weekStart.toLocaleDateString("es-ES",{month:"long",year:"numeric"})}</h3></div><div className="flex gap-2"><button onClick={()=>setWeekOffset(v=>v-1)} className="rounded-lg border px-3 py-2" aria-label="Semana anterior">←</button><button onClick={()=>setWeekOffset(0)} className="rounded-lg border px-3 py-2 text-sm">Hoy</button><button onClick={()=>setWeekOffset(v=>v+1)} className="rounded-lg border px-3 py-2" aria-label="Semana siguiente">→</button></div></div><div className="grid grid-cols-7 gap-1">{weekDays.map(d=><div key={dateKey(d)} className="min-w-0 rounded-lg bg-muted/60 p-1.5 sm:p-2"><div className="text-center text-[10px] font-semibold uppercase sm:text-xs">{d.toLocaleDateString("es-ES",{weekday:"short"})}</div><div className="mb-2 text-center text-sm font-bold">{d.getDate()}</div><div className="space-y-1">{events.filter(e=>e.date===dateKey(d)).map(e=><div key={e.id} className={`rounded-md p-1 text-[9px] leading-tight sm:text-xs ${e.done?"bg-emerald-100 text-emerald-900 opacity-60":"bg-primary/10 text-foreground"}`}><div className="font-bold">{e.start||"—"}</div><div className="break-words">{e.title}</div><button onClick={()=>setEvents(v=>v.map(x=>x.id===e.id?{...x,done:!x.done}:x))} className="mt-1 underline">{e.done?"Reabrir":"Completar"}</button><button onClick={()=>{const title=prompt("Editar título del evento",e.title);if(title?.trim())setEvents(v=>v.map(x=>x.id===e.id?{...x,title:title.trim()}:x));}} className="ml-1 underline">Editar</button><button onClick={()=>setEvents(v=>v.filter(x=>x.id!==e.id))} className="ml-1 underline">Borrar</button></div>)}</div></div>)}</div></div>
+        <div className="rounded-2xl border bg-card p-4 sm:p-5"><div className="mb-4 flex items-center justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Calendario semanal</p><h3 className="text-xl font-semibold">{weekStart.toLocaleDateString("es-ES",{month:"long",year:"numeric"})}</h3><p className="mt-1 text-xs text-muted-foreground">Guardado automático en este navegador</p></div><div className="flex gap-2"><button onClick={()=>setWeekOffset(v=>v-1)} className="rounded-lg border px-3 py-2" aria-label="Semana anterior">←</button><button onClick={()=>setWeekOffset(0)} className="rounded-lg border px-3 py-2 text-sm">Hoy</button><button onClick={()=>setWeekOffset(v=>v+1)} className="rounded-lg border px-3 py-2" aria-label="Semana siguiente">→</button></div></div><div className="grid grid-cols-7 gap-1">{weekDays.map(d=><div key={dateKey(d)} className="min-w-0 rounded-lg bg-muted/60 p-1.5 sm:p-2"><div className="text-center text-[10px] font-semibold uppercase sm:text-xs">{d.toLocaleDateString("es-ES",{weekday:"short"})}</div><div className="mb-2 text-center text-sm font-bold">{d.getDate()}</div><div className="space-y-1">{events.filter(e=>e.date===dateKey(d)).map(e=><div key={e.id} className={`rounded-md p-1 text-[9px] leading-tight sm:text-xs ${e.done?"bg-emerald-100 text-emerald-900 opacity-60":"bg-primary/10 text-foreground"}`}><div className="font-bold">{e.start||"—"}</div><div className="break-words">{e.title}</div><button onClick={()=>setEvents(v=>v.map(x=>x.id===e.id?{...x,done:!x.done}:x))} className="mt-1 underline">{e.done?"Reabrir":"Completar"}</button><button onClick={()=>{const title=prompt("Editar título del evento",e.title);if(title?.trim())setEvents(v=>v.map(x=>x.id===e.id?{...x,title:title.trim()}:x));}} className="ml-1 underline">Editar</button><button onClick={()=>setEvents(v=>v.filter(x=>x.id!==e.id))} className="ml-1 underline">Borrar</button></div>)}</div></div>)}</div></div>
         <aside className="space-y-4"><div className="rounded-2xl border bg-card p-4"><h3 className="font-semibold">Añadir con lenguaje natural</h3><textarea value={natural} onChange={e=>setNatural(e.target.value)} rows={3} placeholder="El martes a las 9:00 tengo un examen de Matemáticas" className="mt-3 w-full rounded-lg border bg-background p-3 text-sm"/><button onClick={makePreview} className="mt-2 w-full rounded-lg border px-3 py-2 text-sm font-semibold">Interpretar y revisar</button>{preview&&<div className="mt-3 rounded-lg bg-muted p-3 text-sm"><strong>Vista previa</strong><p>{preview.title}</p><p>{preview.type} · {preview.subject||"Sin asignatura"}</p><p>{preview.date} · {preview.start}</p><button onClick={()=>addEvent(preview)} className="mt-2 w-full rounded-lg bg-primary px-3 py-2 font-semibold text-primary-foreground">Confirmar y guardar</button></div>}</div>
         <div className="rounded-2xl border bg-card p-4"><h3 className="font-semibold">Crear evento manual</h3><div className="mt-3 space-y-2"><input value={eventTitle} onChange={e=>setEventTitle(e.target.value)} placeholder="Título" className="w-full rounded-lg border bg-background px-3 py-2 text-sm"/><select value={eventType} onChange={e=>setEventType(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm">{["Examen","Tarea","Entrega","Estudio","Clase","Otro"].map(x=><option key={x}>{x}</option>)}</select><select value={eventSubject} onChange={e=>setEventSubject(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm"><option value="">Sin asignatura</option>{visibleSubjects.map(s=><option key={s.id}>{s.name}</option>)}</select><input type="date" value={eventDate} onChange={e=>setEventDate(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm"/><input type="time" value={eventTime} onChange={e=>setEventTime(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm"/><button onClick={()=>addEvent({title:eventTitle,subject:eventSubject,type:eventType,date:eventDate,start:eventTime,end:"",notes:""})} className="w-full rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground">Guardar evento</button></div></div></aside>
       </div>}
