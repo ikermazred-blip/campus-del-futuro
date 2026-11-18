@@ -6,6 +6,7 @@ on:
       - feature/school-ai-world-complete
       - fix/school-ai-world-preview
       - feature/subject-characters-main-agenda
+      - fix/subject-campus-responsive-camera
   pull_request:
     branches:
       - main
