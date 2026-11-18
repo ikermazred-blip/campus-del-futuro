@@ -93,7 +93,8 @@ interface Props {
   name: string;
   accent: string;
   active: boolean;
-  onActivate: () => void;\n  hint?: string;
+  onActivate: () => void;
+  hint?: string;
 }
 
 /** A posed CC0 human with a gentle idle, hover ring and a clickable name label. */
