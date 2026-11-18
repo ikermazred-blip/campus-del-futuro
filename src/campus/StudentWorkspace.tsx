@@ -96,8 +96,10 @@ async function downloadBlob(key: string) {
   }
 }
 
-export function StudentWorkspace() {
-  const [tab, setTab] = useState<Tab>("subjects");
+interface StudentWorkspaceProps { initialTab?: Tab; embedded?: boolean; }
+
+export function StudentWorkspace({ initialTab = "subjects", embedded = false }: StudentWorkspaceProps) {
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [subjects, setSubjects] = useState<Subject[]>(DEFAULT_SUBJECTS.map((name) => ({ id: name, name })));
   const [events, setEvents] = useState<EventItem[]>([]);
   const [records, setRecords] = useState<StudyRecord[]>([]);
