@@ -150,13 +150,13 @@ export default function CampusCanvas(props: CampusCanvasProps) {
         enableDamping
         dampingFactor={0.08}
         minDistance={22}
-        maxDistance={170}
+        maxDistance={360}
         minPolarAngle={0.35}
         maxPolarAngle={1.22}
         screenSpacePanning={false}
         zoomSpeed={0.8}
       />
-      <CameraRig focusId={null} resetKey={resetKey} />
+      <CameraRig focusId={selectedId} resetKey={resetKey} />
       <ReadySignal onReady={onReady} onFatal={onFatal} />
     </Canvas>
   );
