@@ -27,3 +27,27 @@
 ## Límites actuales
 
 El código queda preparado, pero no puede desplegarse ni activarse sin un proyecto Supabase y sus secretos. El historial local anterior no se sube automáticamente. La interfaz nueva sí está preparada para recuperar el historial remoto cuando se configure la cuenta.
+
+
+## Despliegue automatizado desde GitHub
+
+Se ha añadido el workflow manual `Deploy SCHOOL AI WORLD chat backend`. Un administrador puede configurarlo así:
+
+1. En GitHub, abre **Settings → Secrets and variables → Actions**.
+2. En **Variables**, crea:
+   - `SUPABASE_PROJECT_ID`: referencia del proyecto Supabase (Project ID).
+   - `SUPABASE_URL`: URL del proyecto, por ejemplo `https://<project-ref>.supabase.co`.
+   - `SUPABASE_ANON_KEY`: clave pública anon/publishable del proyecto.
+3. En **Secrets**, crea:
+   - `SUPABASE_ACCESS_TOKEN`: token de acceso personal de Supabase.
+   - `SUPABASE_DB_PASSWORD`: contraseña de la base de datos del proyecto.
+4. En el panel de Supabase, en **Edge Functions → Secrets**, configura:
+   - `AI_PROVIDER=gemini` o `AI_PROVIDER=openai`.
+   - `GEMINI_API_KEY` o `OPENAI_API_KEY`, según el proveedor.
+   - `APP_ORIGIN=https://ikermazred-blip.github.io`.
+   - Si se desea, `GEMINI_MODEL` o `OPENAI_MODEL`.
+   Supabase proporciona automáticamente a las funciones `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY`.
+5. Ejecuta **Actions → Deploy SCHOOL AI WORLD chat backend → Run workflow**. Esto enlaza el proyecto, aplica la migración y despliega la función con la verificación JWT activada.
+6. El workflow de GitHub Pages ya lee `SUPABASE_URL` y `SUPABASE_ANON_KEY` desde las variables de Actions. Al guardarlas, ejecuta **Actions → Deploy SCHOOL AI WORLD to GitHub Pages → Run workflow** para reconstruir la web con la conexión.
+
+No compartas los secretos por chat, correo ni commits. El token de acceso, la contraseña de base de datos y las claves de IA deben permanecer privados y bajo control del administrador.
