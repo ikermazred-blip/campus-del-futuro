@@ -4,15 +4,16 @@ import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { SubjectId } from "../subjects";
 import { overviewPose, subjectPose } from "../camera";
-import { getSubject } from "../subjects";
+import { getSubject, getSubjectLayout, type SubjectId as CampusSubjectId } from "../subjects";
 
 interface Props {
   focusId: SubjectId | null;
+  visibleSubjectIds: CampusSubjectId[];
   resetKey: number;
 }
 
 /** Smoothly flies the orbit camera to the overview or the selected subject character. */
-export function CameraRig({ focusId, resetKey }: Props) {
+export function CameraRig({ focusId, visibleSubjectIds, resetKey }: Props) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const controls = useThree((s) => s.controls) as unknown as OrbitControlsImpl | null;
   const size = useThree((s) => s.size);
@@ -23,11 +24,13 @@ export function CameraRig({ focusId, resetKey }: Props) {
   useEffect(() => {
     if (!controls) return;
     const subject = getSubject(focusId);
-    const pose = subject
-      ? subjectPose(subject.id, subject, camera.fov, aspectRef.current)
-      : overviewPose(camera.fov, aspectRef.current);
+    const layout = getSubjectLayout(visibleSubjectIds);
+    const position = subject ? layout[subject.id] : undefined;
+    const pose = subject && position
+      ? subjectPose(subject.id, position, camera.fov, aspectRef.current)
+      : overviewPose(camera.fov, aspectRef.current, visibleSubjectIds);
     goal.current = { pos: new THREE.Vector3(...pose.position), target: new THREE.Vector3(...pose.target) };
-  }, [focusId, resetKey, controls, camera]);
+  }, [focusId, visibleSubjectIds, resetKey, controls, camera]);
 
   useEffect(() => {
     if (!controls) return;

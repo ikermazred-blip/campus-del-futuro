@@ -3,7 +3,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import type { SubjectId } from "./subjects";
-import { SUBJECTS } from "./subjects";
+import { getSubjectLayout, SUBJECTS } from "./subjects";
 import { overviewPose } from "./camera";
 import { Character } from "./scene/Character";
 import { CampusClassroom } from "./scene/CampusClassroom";
@@ -102,30 +102,34 @@ const World = memo(function World({
   onSelect,
   onHover,
 }: Pick<CampusCanvasProps, "visibleSubjectIds" | "selectedId" | "hoveredId" | "onSelect" | "onHover">) {
+  const layout = getSubjectLayout(visibleSubjectIds);
   return (
     <>
       <CampusGrounds />
-      {SUBJECTS.filter((subject) => visibleSubjectIds.includes(subject.id)).map((subject) => (
-        <group key={subject.id} position={[subject.x, 0.08, subject.z]}>
-          <CampusClassroom name={subject.name} accent={subject.accent} />
-          <Character
-            model={subject.model}
-            pose={subject.pose}
-            name={subject.name}
-            accent={subject.accent}
-            active={selectedId === subject.id || hoveredId === subject.id}
-            hint="Seleccionar asignatura"
-            onActivate={() => onSelect(subject.id)}
-          />
-        </group>
-      ))}
+      {SUBJECTS.filter((subject) => visibleSubjectIds.includes(subject.id)).map((subject) => {
+        const position = layout[subject.id];
+        return (
+          <group key={subject.id} position={[position.x, 0.08, position.z]} scale={1.16}>
+            <CampusClassroom name={subject.name} accent={subject.accent} />
+            <Character
+              model={subject.model}
+              pose={subject.pose}
+              name={subject.name}
+              accent={subject.accent}
+              active={selectedId === subject.id || hoveredId === subject.id}
+              hint="Seleccionar asignatura"
+              onActivate={() => onSelect(subject.id)}
+            />
+          </group>
+        );
+      })}
     </>
   );
 });
 
 export default function CampusCanvas(props: CampusCanvasProps) {
   const { visibleSubjectIds, selectedId, hoveredId, resetKey, onSelect, onHover, onReady, onFatal } = props;
-  const initial = useMemo(() => overviewPose(FOV, window.innerWidth / Math.max(1, window.innerHeight)), []);
+  const initial = useMemo(() => overviewPose(FOV, window.innerWidth / Math.max(1, window.innerHeight), visibleSubjectIds), [visibleSubjectIds]);
   const clearCursor = useCallback(() => {
     document.body.style.cursor = "";
   }, []);
@@ -160,7 +164,7 @@ export default function CampusCanvas(props: CampusCanvasProps) {
         screenSpacePanning={false}
         zoomSpeed={0.8}
       />
-      <CameraRig focusId={selectedId} resetKey={resetKey} />
+      <CameraRig focusId={selectedId} visibleSubjectIds={visibleSubjectIds} resetKey={resetKey} />
       <ReadySignal onReady={onReady} onFatal={onFatal} />
     </Canvas>
   );

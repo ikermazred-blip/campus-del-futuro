@@ -2,6 +2,7 @@
 import type { AssistantId } from "./assistants";
 import type { SubjectId } from "./subjects";
 import { characterWorld } from "./rooms";
+import { getSubjectLayout, SUBJECTS, type SubjectId as CampusSubjectId } from "./subjects";
 
 export interface Pose {
   position: [number, number, number];
@@ -27,10 +28,16 @@ function along(target: [number, number, number], dist: number, dir = DIR): Pose 
   };
 }
 
-export function overviewPose(fovDeg: number, aspect: number): Pose {
-  const halfWidth = 50;
-  const dist = Math.min(360, Math.max(70, halfWidth / halfHorizontalTan(fovDeg, aspect)));
-  return along([-2, 0, 4], dist);
+export function overviewPose(fovDeg: number, aspect: number, visibleIds: readonly CampusSubjectId[] = SUBJECTS.map((subject) => subject.id)): Pose {
+  const layout = getSubjectLayout(visibleIds);
+  const positions = visibleIds.map((id) => layout[id]).filter(Boolean);
+  const halfWidth = Math.max(10, ...positions.map((p) => Math.abs(p.x) + 10.5));
+  const halfDepth = Math.max(10, ...positions.map((p) => Math.abs(p.z) + 10.5));
+  const halfFov = Math.tan(((fovDeg * Math.PI) / 180) / 2);
+  const horizontalFit = halfWidth / Math.max(0.12, halfFov * aspect);
+  const depthFit = halfDepth / Math.max(0.12, halfFov);
+  const dist = Math.min(420, Math.max(58, Math.max(horizontalFit, depthFit) * 1.22));
+  return along([0, 0, 0], dist);
 }
 
 /** Close view into a building's cut-away ground floor, framing the character. */
