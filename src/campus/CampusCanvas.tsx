@@ -109,7 +109,7 @@ const World = memo(function World({
       {SUBJECTS.filter((subject) => visibleSubjectIds.includes(subject.id)).map((subject) => {
         const position = layout[subject.id];
         return (
-          <group key={subject.id} position={[position.x, 0.08, position.z]} scale={1.12}>
+          <group key={subject.id} position={[position.x, 0.08, position.z]} scale={1.16}>
             <CampusClassroom name={subject.name} accent={subject.accent} />
             <Character
               model={subject.model}
@@ -129,7 +129,7 @@ const World = memo(function World({
 
 export default function CampusCanvas(props: CampusCanvasProps) {
   const { visibleSubjectIds, selectedId, hoveredId, resetKey, onSelect, onHover, onReady, onFatal } = props;
-  const initial = useMemo(() => overviewPose(FOV, window.innerWidth / Math.max(1, window.innerHeight), visibleSubjectIds), []);
+  const initial = useMemo(() => overviewPose(FOV, window.innerWidth / Math.max(1, window.innerHeight), visibleSubjectIds), [visibleSubjectIds]);
   const clearCursor = useCallback(() => {
     document.body.style.cursor = "";
   }, []);
