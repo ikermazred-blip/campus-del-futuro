@@ -26,6 +26,7 @@ function readConversations(): Conversation[] {
 
 export function TutorChat({ agentId, title, mode, description }: Props) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [activeId, setActiveId] = useState("");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -37,11 +38,13 @@ export function TutorChat({ agentId, title, mode, description }: Props) {
     setConversations(all);
     const latest = all.filter((item) => item.agentId === agentId).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
     if (latest) setActiveId(latest.id);
+    setLoaded(true);
   }, [agentId]);
 
   useEffect(() => {
+    if (!loaded) return;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations)); } catch { /* storage quota or private mode */ }
-  }, [conversations]);
+  }, [conversations, loaded]);
 
   const agentConversations = useMemo(
     () => conversations.filter((item) => item.agentId === agentId).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
