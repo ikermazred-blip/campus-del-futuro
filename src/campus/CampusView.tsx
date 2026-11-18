@@ -1,14 +1,14 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { AlertTriangle, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { AssistantId } from "./assistants";
+import type { SubjectId } from "./subjects";
 
 interface Props {
-  selectedId: AssistantId | null;
-  hoveredId: AssistantId | null;
+  selectedId: SubjectId | null;
+  hoveredId: SubjectId | null;
   resetKey: number;
-  onSelect: (id: AssistantId) => void;
-  onHover: (id: AssistantId | null) => void;
+  onSelect: (id: SubjectId) => void;
+  onHover: (id: SubjectId | null) => void;
 }
 
 type Status = "checking" | "loading" | "ready" | "unsupported" | "error";
