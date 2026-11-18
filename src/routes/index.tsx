@@ -89,11 +89,11 @@ function getVisibleSubjectIds(profile: StudentProfile | null): SubjectId[] {
 function Home() {
   const { asignatura } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const visibleSubjectIds = useMemo(() => getVisibleSubjectIds(profile), [profile]);
-  const selected = visibleSubjectIds.includes(asignatura as SubjectId) ? getSubject(asignatura) : undefined;
   const [hoveredId, setHoveredId] = useState<SubjectId | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const visibleSubjectIds = useMemo(() => getVisibleSubjectIds(profile), [profile]);
+  const selected = visibleSubjectIds.includes(asignatura as SubjectId) ? getSubject(asignatura) : undefined;
   const [profileReady, setProfileReady] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [showEntryReminder, setShowEntryReminder] = useState(false);
