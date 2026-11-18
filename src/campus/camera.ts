@@ -1,5 +1,6 @@
 /** Camera poses (pure maths). Elevated isometric-style view from the south-east. */
 import type { AssistantId } from "./assistants";
+import type { SubjectId } from "./subjects";
 import { characterWorld } from "./rooms";
 
 export interface Pose {
@@ -28,7 +29,7 @@ function along(target: [number, number, number], dist: number, dir = DIR): Pose 
 
 export function overviewPose(fovDeg: number, aspect: number): Pose {
   const halfWidth = 50;
-  const dist = Math.min(190, Math.max(70, halfWidth / halfHorizontalTan(fovDeg, aspect)));
+  const dist = Math.min(360, Math.max(70, halfWidth / halfHorizontalTan(fovDeg, aspect)));
   return along([-2, 0, 4], dist);
 }
 
@@ -40,4 +41,20 @@ export function interiorPose(id: AssistantId, fovDeg: number, aspect: number): P
   const az = (10 * Math.PI) / 180;
   const el = (31 * Math.PI) / 180;
   return along([x, y + 0.9, z + 1.6], dist, [Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)]);
+}
+
+
+/** Close view of one subject character, keeping the full person and label in frame. */
+export function subjectPose(
+  id: SubjectId,
+  coordinates: { x: number; z: number },
+  fovDeg: number,
+  aspect: number,
+): Pose {
+  const halfWidth = 4.2;
+  const dist = Math.min(48, Math.max(14, halfWidth / halfHorizontalTan(fovDeg, aspect)));
+  const target: [number, number, number] = [coordinates.x, 1.05, coordinates.z];
+  const az = (12 * Math.PI) / 180;
+  const el = (25 * Math.PI) / 180;
+  return along(target, dist, [Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)]);
 }
