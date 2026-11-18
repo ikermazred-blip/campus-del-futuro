@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - feature/school-ai-world-complete
+      - fix/school-ai-world-preview
   pull_request:
     branches:
       - main
