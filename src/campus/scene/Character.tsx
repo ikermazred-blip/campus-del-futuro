@@ -93,11 +93,11 @@ interface Props {
   name: string;
   accent: string;
   active: boolean;
-  onActivate: () => void;
+  onActivate: () => void;\n  hint?: string;
 }
 
 /** A posed CC0 human with a gentle idle, hover ring and a clickable name label. */
-export function Character({ model, pose, name, accent, active, onActivate }: Props) {
+export function Character({ model, pose, name, accent, active, onActivate, hint = "Pulsa para hablar" }: Props) {
   const { scene } = useGLTF(CHARACTER_URL[model]);
   const [hovered, setHovered] = useState(false);
 
@@ -132,7 +132,7 @@ export function Character({ model, pose, name, accent, active, onActivate }: Pro
     };
   }, [scene, pose]);
 
-  const label = useMemo(() => makeLabelTexture(name, "Pulsa para hablar", accent), [name, accent]);
+  const label = useMemo(() => makeLabelTexture(name, hint, accent), [name, hint, accent]);
   const ringMat = useMemo(
     () => new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.5, toneMapped: false, depthWrite: false }),
     [accent],
