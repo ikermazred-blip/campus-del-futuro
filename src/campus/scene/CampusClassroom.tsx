@@ -1,10 +1,8 @@
 import { memo } from "react";
-import * as THREE from "three";
-
-interface Props { name: string; accent: string; }
+interface Props { accent: string; }
 
 /** Open-front classroom bay: floor, walls, glazing, desk and chair. */
-export const CampusClassroom = memo(function CampusClassroom({ name, accent }: Props) {
+export const CampusClassroom = memo(function CampusClassroom({ accent }: Props) {
   const wall = "#e8edf0";
   const trim = "#aebbc3";
   return (
@@ -56,7 +54,7 @@ export const CampusClassroom = memo(function CampusClassroom({ name, accent }: P
         <boxGeometry args={[3.5, 0.16, 1.65]} />
         <meshStandardMaterial color="#98734f" roughness={0.58} />
       </mesh>
-      {[[-1.55, 0.42, 0.9], [1.55, 0.42, 0.9], [-1.55, 0.42, 2.2], [1.55, 0.42, 2.2]].map(([x,y,z], i) => (
+      {([[-1.55, 0.42, 0.9], [1.55, 0.42, 0.9], [-1.55, 0.42, 2.2], [1.55, 0.42, 2.2]] as [number, number, number][]).map(([x, y, z], i) => (
         <mesh key={i} position={[x,y,z]} castShadow>
           <boxGeometry args={[0.12, 0.84, 0.12]} />
           <meshStandardMaterial color="#555d63" metalness={0.35} roughness={0.5} />
