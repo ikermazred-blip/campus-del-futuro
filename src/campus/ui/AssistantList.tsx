@@ -15,7 +15,7 @@ export function AssistantList({ onShowInCampus }: Props) {
         Todos los asistentes
       </h2>
       <p className="mt-3 max-w-2xl text-muted-foreground">
-        Cada edificio del campus es un asistente. Ábrelo desde aquí o localízalo en el mapa 3D.
+        Estos seis asistentes generales complementan a los personajes de tus asignaturas. Ábrelos desde aquí cuando necesites ayuda global.
       </p>
       <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {ASSISTANTS.map((a) => (
