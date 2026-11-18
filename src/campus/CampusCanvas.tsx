@@ -7,6 +7,7 @@ import { SUBJECTS } from "./subjects";
 import { overviewPose } from "./camera";
 import { Character } from "./scene/Character";
 import { CampusClassroom } from "./scene/CampusClassroom";
+import { CampusGrounds } from "./scene/CampusGrounds";
 import { CameraRig } from "./scene/CameraRig";
 
 export interface CampusCanvasProps {
@@ -101,6 +102,7 @@ const World = memo(function World({
 }: Pick<CampusCanvasProps, "selectedId" | "hoveredId" | "onSelect" | "onHover">) {
   return (
     <>
+      <CampusGrounds />
       {SUBJECTS.map((subject) => (
         <group key={subject.id} position={[subject.x, 0.08, subject.z]}>
           <CampusClassroom name={subject.name} accent={subject.accent} />
