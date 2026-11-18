@@ -1,12 +1,12 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, Lightformer, OrbitControls, Sky } from "@react-three/drei";
+import { Environment, Lightformer, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import type { SubjectId } from "./subjects";
 import { SUBJECTS } from "./subjects";
 import { overviewPose } from "./camera";
 import { Character } from "./scene/Character";
-import { CampusGrounds } from "./scene/Grounds";
+import { CampusClassroom } from "./scene/CampusClassroom";
 import { CameraRig } from "./scene/CameraRig";
 
 export interface CampusCanvasProps {
@@ -48,8 +48,8 @@ function Lighting() {
         <Lightformer intensity={0.8} color="#ffffff" position={[0, 4, -14]} scale={[30, 4, 1]} />
         <Lightformer intensity={0.5} color="#a3b18a" position={[0, -6, 0]} rotation-x={Math.PI / 2} scale={[40, 40, 1]} />
       </Environment>
-      <Sky distance={4500} sunPosition={SUN} turbidity={5.5} rayleigh={1.3} mieCoefficient={0.004} mieDirectionalG={0.82} />
-      <fog attach="fog" args={["#dfe5e4", 140, 420]} />
+      <color attach="background" args={["#dce4e8"]} />
+      <fog attach="fog" args={["#dce4e8", 125, 260]} />
     </>
   );
 }
@@ -101,9 +101,9 @@ const World = memo(function World({
 }: Pick<CampusCanvasProps, "selectedId" | "hoveredId" | "onSelect" | "onHover">) {
   return (
     <>
-      <CampusGrounds />
       {SUBJECTS.map((subject) => (
         <group key={subject.id} position={[subject.x, 0.08, subject.z]}>
+          <CampusClassroom name={subject.name} accent={subject.accent} />
           <Character
             model={subject.model}
             pose={subject.pose}
