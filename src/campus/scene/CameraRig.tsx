@@ -2,15 +2,16 @@ import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import type { AssistantId } from "../assistants";
-import { interiorPose, overviewPose } from "../camera";
+import type { SubjectId } from "../subjects";
+import { overviewPose, subjectPose } from "../camera";
+import { getSubject } from "../subjects";
 
 interface Props {
-  focusId: AssistantId | null;
+  focusId: SubjectId | null;
   resetKey: number;
 }
 
-/** Smoothly flies the orbit camera to the overview or to the selected building. */
+/** Smoothly flies the orbit camera to the overview or the selected subject character. */
 export function CameraRig({ focusId, resetKey }: Props) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const controls = useThree((s) => s.controls) as unknown as OrbitControlsImpl | null;
@@ -21,7 +22,10 @@ export function CameraRig({ focusId, resetKey }: Props) {
 
   useEffect(() => {
     if (!controls) return;
-    const pose = focusId ? interiorPose(focusId, camera.fov, aspectRef.current) : overviewPose(camera.fov, aspectRef.current);
+    const subject = getSubject(focusId);
+    const pose = subject
+      ? subjectPose(subject.id, subject, camera.fov, aspectRef.current)
+      : overviewPose(camera.fov, aspectRef.current);
     goal.current = { pos: new THREE.Vector3(...pose.position), target: new THREE.Vector3(...pose.target) };
   }, [focusId, resetKey, controls, camera]);
 
