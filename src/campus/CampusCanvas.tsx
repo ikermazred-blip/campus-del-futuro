@@ -33,7 +33,7 @@ function Lighting() {
         intensity={3.1}
         color="#fff0d8"
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[3072, 3072]}
         shadow-camera-left={-78}
         shadow-camera-right={78}
         shadow-camera-top={70}
@@ -43,7 +43,7 @@ function Lighting() {
         shadow-bias={-0.0004}
         shadow-normalBias={0.04}
       />
-      <Environment resolution={256} environmentIntensity={0.75}>
+      <Environment resolution={512} environmentIntensity={0.85}>
         <color attach="background" args={["#c9d9e4"]} />
         <Lightformer intensity={2.2} color="#fff4e0" position={[10, 12, 8]} scale={[18, 18, 1]} />
         <Lightformer intensity={1.2} color="#bcd6ee" position={[-12, 6, -6]} rotation-y={Math.PI / 2} scale={[30, 6, 1]} />
@@ -109,7 +109,7 @@ const World = memo(function World({
       {SUBJECTS.filter((subject) => visibleSubjectIds.includes(subject.id)).map((subject) => {
         const position = layout[subject.id];
         return (
-          <group key={subject.id} position={[position.x, 0.08, position.z]} scale={1.16}>
+          <group key={subject.id} position={[position.x, 0.08, position.z]}>
             <CampusClassroom name={subject.name} accent={subject.accent} />
             <Character
               model={subject.model}
@@ -138,7 +138,7 @@ export default function CampusCanvas(props: CampusCanvasProps) {
   return (
     <Canvas
       shadows="percentage"
-      dpr={[1, 1.75]}
+      dpr={[1, 2]}
       camera={{ fov: FOV, near: 1, far: 3000, position: initial.position }}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       onCreated={({ gl, scene, camera }) => {
