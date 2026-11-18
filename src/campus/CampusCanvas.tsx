@@ -2,19 +2,19 @@ import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, OrbitControls, Sky } from "@react-three/drei";
 import * as THREE from "three";
-import { ASSISTANTS, type AssistantId } from "./assistants";
-import { BUILDINGS } from "./layout";
+import type { SubjectId } from "./subjects";
+import { SUBJECTS } from "./subjects";
 import { overviewPose } from "./camera";
-import { Building } from "./scene/Building";
+import { Character } from "./scene/Character";
 import { CampusGrounds } from "./scene/Grounds";
 import { CameraRig } from "./scene/CameraRig";
 
 export interface CampusCanvasProps {
-  selectedId: AssistantId | null;
-  hoveredId: AssistantId | null;
+  selectedId: SubjectId | null;
+  hoveredId: SubjectId | null;
   resetKey: number;
-  onSelect: (id: AssistantId) => void;
-  onHover: (id: AssistantId | null) => void;
+  onSelect: (id: SubjectId) => void;
+  onHover: (id: SubjectId | null) => void;
   onReady: () => void;
   onFatal: (message: string) => void;
 }
@@ -102,20 +102,19 @@ const World = memo(function World({
   return (
     <>
       <CampusGrounds />
-      {BUILDINGS.map((spec) => {
-        const a = ASSISTANTS.find((x) => x.id === spec.id)!;
-        return (
-          <Building
-            key={spec.id}
-            spec={spec}
-            assistant={a}
-            hovered={hoveredId === spec.id}
-            selected={selectedId === spec.id}
-            onHover={onHover}
-            onSelect={onSelect}
+      {SUBJECTS.map((subject) => (
+        <group key={subject.id} position={[subject.x, 0.08, subject.z]}>
+          <Character
+            model={subject.model}
+            pose={subject.pose}
+            name={subject.name}
+            accent={subject.accent}
+            active={selectedId === subject.id || hoveredId === subject.id}
+            hint="Seleccionar asignatura"
+            onActivate={() => onSelect(subject.id)}
           />
-        );
-      })}
+        </group>
+      ))}
     </>
   );
 });
@@ -140,7 +139,7 @@ export default function CampusCanvas(props: CampusCanvasProps) {
         gl.toneMappingExposure = 1.02;
       }}
       onPointerMissed={clearCursor}
-      aria-label="Campus 3D de SCHOOL AI WORLD con seis edificios"
+      aria-label="Campus 3D de SCHOOL AI WORLD con personajes para doce asignaturas"
       role="img"
     >
       <Lighting />
@@ -157,7 +156,7 @@ export default function CampusCanvas(props: CampusCanvasProps) {
         screenSpacePanning={false}
         zoomSpeed={0.8}
       />
-      <CameraRig focusId={selectedId} resetKey={resetKey} />
+      <CameraRig focusId={null} resetKey={resetKey} />
       <ReadySignal onReady={onReady} onFatal={onFatal} />
     </Canvas>
   );
