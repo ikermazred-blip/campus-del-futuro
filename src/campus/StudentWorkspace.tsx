@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SUBJECTS, type SubjectId } from "./subjects";
-import { getSubjectTutor, TUTOR_MODES } from "./subjectTutors";
-import { BookOpen, CalendarDays, ChartNoAxesCombined, FileText, Plus, Trash2, Copy, GraduationCap } from "lucide-react";
+import { TUTOR_MODES } from "./subjectTutors";
+import { TutorChat } from "./ui/TutorChat";
+import { BookOpen, CalendarDays, ChartNoAxesCombined, FileText, Plus, Trash2, GraduationCap } from "lucide-react";
 
 type Tab = "subjects" | "agenda" | "progress" | "library";
 type Tutor = "Profesor particular" | "Entrenador de ejercicios" | "Preparador de exámenes" | "Experto en apuntes";
@@ -110,7 +111,6 @@ export function StudentWorkspace({ initialTab = "subjects", embedded = false, vi
   const [newSubject, setNewSubject] = useState("");
   const [selectedSubject, setSelectedSubject] = useState(DEFAULT_SUBJECTS[0] ?? "Matemáticas");
   const [selectedTutor, setSelectedTutor] = useState<Tutor>("Profesor particular");
-  const [question, setQuestion] = useState("");
   const [topic, setTopic] = useState("");
   const [recordSubject, setRecordSubject] = useState(DEFAULT_SUBJECTS[0] ?? "Matemáticas");
   const [recordStatus, setRecordStatus] = useState<"estudiado" | "pendiente">("estudiado");
@@ -181,7 +181,6 @@ export function StudentWorkspace({ initialTab = "subjects", embedded = false, vi
   const sortedEvents = [...events].sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
   const completed = records.filter((r) => r.status === "estudiado").length;
   const campusSubject = SUBJECTS.find((subject) => subject.name === selectedSubject);
-  const gem = campusSubject ? getSubjectTutor(campusSubject.id) : null;
 
   const addSubject = () => {
     const name = newSubject.trim();
@@ -241,18 +240,12 @@ export function StudentWorkspace({ initialTab = "subjects", embedded = false, vi
               </button>
             ))}
           </div>
-          {gem ? (
-            <div className="mt-4 rounded-xl border bg-card p-4">
-              <p className="text-sm font-semibold">{gem.name}</p>
-              <p className="mt-1 text-sm text-muted-foreground">Los cuatro modos utilizan este mismo Gem especializado. Al abrirlo, selecciona el modo anterior y continúa allí tu consulta.</p>
-              <a href={gem.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">Abrir tutor de {selectedSubject} <span aria-hidden>↗</span></a>
-            </div>
-          ) : (
-            <p className="mt-4 rounded-lg border p-3 text-sm text-muted-foreground">Esta asignatura personalizada todavía no tiene un Gem enlazado.</p>
-          )}
-          <label className="mt-4 block text-sm font-semibold" htmlFor="tutor-question">Prepara tu consulta</label>
-          <textarea id="tutor-question" value={question} onChange={e=>setQuestion(e.target.value)} rows={3} placeholder="Escribe aquí lo que quieres trabajar antes de abrir el Gem…" className="mt-2 w-full rounded-lg border bg-background p-3 text-sm"/>
-          <button disabled={!question.trim()} onClick={()=>{void navigator.clipboard?.writeText(`Asignatura: ${selectedSubject}\nModo: ${selectedTutor}\nConsulta: ${question}`);setNotice("Consulta copiada. Pégala en el Gem al abrirlo.");}} className="mt-3 inline-flex items-center gap-2 rounded-lg border bg-card px-4 py-2.5 text-sm font-semibold disabled:opacity-40"><Copy size={16}/>Copiar consulta</button>
+          <TutorChat
+            agentId={campusSubject?.id ?? selectedSubject.toLocaleLowerCase("es").replace(/[^a-z0-9]+/g, "-")}
+            title={`Tutor de ${selectedSubject}`}
+            mode={selectedTutor}
+            description={TUTOR_MODES.find((mode) => mode.title === selectedTutor)?.description ?? "Pregunta cualquier duda de esta asignatura."}
+          />
         </div></div>
       </div>}
 
