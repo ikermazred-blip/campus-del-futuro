@@ -30,6 +30,28 @@ export const SUBJECTS: readonly CampusSubject[] = [
   { id: "economia", name: "Economía", description: "Conceptos económicos, gráficos y casos prácticos.", x: 30, z: 24, model: "planificadora", pose: "sitDesk", accent: "#a18a43" },
 ];
 
+ 
+/** Reflows the visible classrooms into a compact, centered grid. */
+export function getSubjectLayout(ids: readonly SubjectId[]): Record<SubjectId, { x: number; z: number }> {
+  const result = {} as Record<SubjectId, { x: number; z: number }>;
+  const count = ids.length;
+  if (!count) return result;
+  const columns = count <= 2 ? count : count <= 9 ? 3 : 4;
+  const rows = Math.ceil(count / columns);
+  const spacing = 24.5;
+  ids.forEach((id, index) => {
+    const row = Math.floor(index / columns);
+    const rowStart = row * columns;
+    const itemsInRow = Math.min(columns, count - rowStart);
+    const column = index - rowStart;
+    result[id] = {
+      x: (column - (itemsInRow - 1) / 2) * spacing,
+      z: (row - (rows - 1) / 2) * spacing,
+    };
+  });
+  return result;
+}
+
 export function isSubjectId(value: unknown): value is SubjectId {
   return typeof value === "string" && SUBJECTS.some((subject) => subject.id === value);
 }
