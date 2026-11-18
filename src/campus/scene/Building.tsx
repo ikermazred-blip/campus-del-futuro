@@ -7,6 +7,7 @@ import { facadeParts, footprint, lobbyHeight, mainVolume, type BoxInst } from ".
 import { getTexture, makeSignTexture, scaledBox, TILE } from "../textures";
 import { getMaterials } from "../materials";
 import { InstancedBoxes } from "./InstancedBoxes";
+import { Interior } from "./Interior";
 
 interface Props {
   spec: BuildingSpec;
@@ -192,6 +193,7 @@ function BuildingImpl({ spec, assistant, hovered, selected, onHover, onSelect }:
 
   return (
     <group position={[spec.x, 0, spec.z]} onPointerOver={over} onPointerOut={out} onClick={click} name={assistant.name}>
+      <group visible={!selected}>
       {/* plinth + body */}
       <mesh geometry={geo.plinth} material={M.concreteDark} position={[0, PLINTH / 2, 0]} castShadow receiveShadow />
       <mesh geometry={geo.body} material={mats.facade} position={[0, PLINTH + bodyH / 2, 0]} castShadow receiveShadow />
@@ -315,6 +317,8 @@ function BuildingImpl({ spec, assistant, hovered, selected, onHover, onSelect }:
       <group position={[0, 0, 0]}>
         <InstancedBoxes items={outline} material={mats.outline} castShadow={false} receiveShadow={false} />
       </group>
+      </group>
+      {selected && <Interior spec={spec} assistant={assistant} facade={mats.facade} cardOpen={false} onOpenCard={() => undefined} />}
     </group>
   );
 }
