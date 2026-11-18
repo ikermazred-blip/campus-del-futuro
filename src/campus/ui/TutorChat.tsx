@@ -4,9 +4,9 @@ import { deleteTutorConversation, getChatSession, isBackendConfigured, listTutor
 
 type Conversation = { id: string; remoteId?: string; title: string; agentId: string; messages: ChatMessage[]; updatedAt: string };
 type Props = { agentId: string; title: string; mode: string; description: string };
-const STORAGE_KEY = "school-ai-world-conversations-v2";
+const STORAGE_KEY = "school-ai-world-conversations-v2";\nconst LEGACY_STORAGE_KEY = "school-ai-world-conversations-v1";
 const makeId = () => globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-function readConversations(): Conversation[] { try { const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) as Conversation[] : []; } catch { return []; } }
+function readConversations(): Conversation[] {\n  try {\n    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);\n    return raw ? JSON.parse(raw) as Conversation[] : [];\n  } catch { return []; }\n}
 
 export function TutorChat({ agentId, title, mode, description }: Props) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
