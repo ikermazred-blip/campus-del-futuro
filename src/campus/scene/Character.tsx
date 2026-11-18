@@ -191,7 +191,7 @@ export function Character({ model, pose, name, accent, active, onActivate, hint 
       </mesh>
       <Billboard position={[0, labelY, 0]}>
         <mesh material={labelMat} scale={hovered ? 1.08 : 1}>
-          <planeGeometry args={[2.1, 0.525]} />
+          <planeGeometry args={[2.65, 0.66]} />
         </mesh>
       </Billboard>
     </group>
