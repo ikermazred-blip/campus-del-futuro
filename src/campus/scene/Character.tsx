@@ -7,12 +7,12 @@ import type { CharacterModel, Pose } from "../rooms";
 import { makeLabelTexture } from "../textures";
 
 export const CHARACTER_URL: Record<CharacterModel, string> = {
-  profesor: "/models/char-profesor.glb",
-  planificadora: "/models/char-planificadora.glb",
-  preparador: "/models/char-preparador.glb",
-  entrenadora: "/models/char-entrenadora.glb",
-  proyectos: "/models/char-proyectos.glb",
-  orientadora: "/models/char-orientadora.glb",
+  profesor: `${import.meta.env.BASE_URL}models/char-profesor.glb`,
+  planificadora: `${import.meta.env.BASE_URL}models/char-planificadora.glb`,
+  preparador: `${import.meta.env.BASE_URL}models/char-preparador.glb`,
+  entrenadora: `${import.meta.env.BASE_URL}models/char-entrenadora.glb`,
+  proyectos: `${import.meta.env.BASE_URL}models/char-proyectos.glb`,
+  orientadora: `${import.meta.env.BASE_URL}models/char-orientadora.glb`,
 };
 
 const HEIGHT = 1.74;
