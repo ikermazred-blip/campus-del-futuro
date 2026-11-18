@@ -1,13 +1,16 @@
-import { MapPin } from "lucide-react";
+import { useState } from "react";
+import { MapPin, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ASSISTANTS, type AssistantId } from "../assistants";
-import { AssistantLink } from "./AssistantLink";
+import { TutorChat } from "./TutorChat";
 
 interface Props {
   onShowInCampus: (id: AssistantId) => void;
 }
 
 export function AssistantList({ onShowInCampus }: Props) {
+  const [activeAssistant, setActiveAssistant] = useState<AssistantId | null>(null);
+  const selectedAssistant = ASSISTANTS.find((assistant) => assistant.id === activeAssistant);
   return (
     <section id="asistentes" aria-labelledby="asistentes-titulo" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:py-20">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Acceso directo</p>
@@ -28,7 +31,7 @@ export function AssistantList({ onShowInCampus }: Props) {
             </div>
             <p className="mt-3 flex-1 text-sm text-muted-foreground">{a.description}</p>
             <div className="mt-5 flex flex-wrap gap-2">
-              <AssistantLink assistant={a} size="default" />
+              <Button onClick={() => setActiveAssistant(a.id)} variant={activeAssistant === a.id ? "default" : "outline"}><MessageCircle aria-hidden /> Abrir chat</Button>
               <Button variant="outline" onClick={() => onShowInCampus(a.id)} aria-label={`Ver en el campus: ${a.name}`}>
                 <MapPin aria-hidden /> Ver en el campus
               </Button>
@@ -36,9 +39,8 @@ export function AssistantList({ onShowInCampus }: Props) {
           </li>
         ))}
       </ol>
-      <p className="mt-8 text-sm text-muted-foreground">
-        Los asistentes se abren en esta misma pestaña. Usa el botón Atrás del navegador para volver al campus.
-      </p>
+      {selectedAssistant && <div className="mt-8"><TutorChat agentId={selectedAssistant.id} title={selectedAssistant.name} mode="Asistente general" description={selectedAssistant.description} /></div>}
+      <p className="mt-8 text-sm text-muted-foreground">Todos los asistentes utilizan el chat integrado de SCHOOL AI WORLD. Sus conversaciones quedan separadas por asistente.</p>
     </section>
   );
 }
