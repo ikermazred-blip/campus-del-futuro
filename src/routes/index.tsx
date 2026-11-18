@@ -3,6 +3,7 @@ import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { List, Move3d, RotateCcw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSubject, isSubjectId, type SubjectId } from "@/campus/subjects";
+import { getSubjectTutor } from "@/campus/subjectTutors";
 import { CampusView } from "@/campus/CampusView";
 import { AssistantList } from "@/campus/ui/AssistantList";
 import { StudentWorkspace } from "@/campus/StudentWorkspace";
@@ -112,9 +113,14 @@ function Home() {
               </div>
               <button type="button" onClick={() => select(null)} className="rounded-full p-2 hover:bg-muted" aria-label="Cerrar selección"><X size={18}/></button>
             </div>
-            <Button className="mt-3 w-full" onClick={() => document.getElementById("agenda")?.scrollIntoView({ behavior: "smooth" })}>
-              Ir a mi espacio de estudio
-            </Button>
+            <div className="mt-3 grid gap-2">
+              <Button asChild className="w-full">
+                <a href={getSubjectTutor(selected.id).url} target="_blank" rel="noopener noreferrer">Abrir tutor de {selected.name}</a>
+              </Button>
+              <Button variant="outline" className="w-full" onClick={() => document.getElementById("agenda")?.scrollIntoView({ behavior: "smooth" })}>
+                Ir a mi espacio de estudio
+              </Button>
+            </div>
           </div>
         )}
       </section>
