@@ -5,6 +5,7 @@ on:
       - main
       - feature/school-ai-world-complete
       - fix/school-ai-world-preview
+      - feature/subject-characters-main-agenda
   pull_request:
     branches:
       - main
