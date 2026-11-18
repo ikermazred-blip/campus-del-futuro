@@ -42,3 +42,24 @@ export async function sendTutorMessage(payload: TutorRequest): Promise<TutorResp
   if (!data.reply || !data.conversationId) throw new Error("El servicio ha devuelto una respuesta incompleta.");
   return data as TutorResponse;
 }
+
+export type StoredTutorConversation = { id: string; agentId: string; mode: string; title: string; updatedAt: string; messages: ChatMessage[] };
+async function authorizedRequest(body: unknown) {
+  if (!isBackendConfigured) throw new Error("El backend todavía no está configurado.");
+  const session = await validSession();
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.accessToken}` },
+    body: JSON.stringify(body),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || `El servicio ha respondido con el error ${response.status}.`);
+  return data;
+}
+export async function listTutorConversations(agentId: string): Promise<StoredTutorConversation[]> {
+  const data = await authorizedRequest({ action: "list", agentId });
+  return data.conversations as StoredTutorConversation[];
+}
+export async function deleteTutorConversation(conversationId: string): Promise<void> {
+  await authorizedRequest({ action: "delete", conversationId });
+}
