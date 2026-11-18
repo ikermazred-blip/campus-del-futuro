@@ -85,6 +85,7 @@ function Home() {
               <p className="text-sm text-muted-foreground sm:text-base">Selecciona un edificio para entrar</p>
             </div>
             <div className="pointer-events-auto flex flex-col gap-2 sm:flex-row">
+              <Button variant="glass" asChild><a href="/workspace">Mi espacio de estudio</a></Button>
               <Button variant="glass" onClick={overview} aria-label="Volver a la vista general del campus">
                 <RotateCcw aria-hidden /> <span className="hidden sm:inline">Vista general</span>
               </Button>
