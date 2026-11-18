@@ -19,7 +19,16 @@ function readStore() {
   } catch { return null; }
 }
 function id() { return globalThis.crypto?.randomUUID?.() ?? String(Date.now()) + Math.random().toString(16).slice(2); }
-function todayInMadrid() {\n  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());\n  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);\n  return new Date(get("year"), get("month") - 1, get("day"));\n}\nfunction mondayOf(date: Date) {
+function todayInMadrid() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  return new Date(get("year"), get("month") - 1, get("day"));
+}\nfunction mondayOf(date: Date) {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
   return d;
