@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import type { SubjectId } from "./subjects";
 
 interface Props {
+  visibleSubjectIds: SubjectId[];
   selectedId: SubjectId | null;
   hoveredId: SubjectId | null;
   resetKey: number;
@@ -38,7 +39,7 @@ class SceneBoundary extends Component<{ onError: (m: string) => void; children: 
 }
 
 /** Client-only 3D campus with WebGL detection, loading timeout, error fallback and retry. */
-export function CampusView({ selectedId, hoveredId, resetKey, onSelect, onHover }: Props) {
+export function CampusView({ visibleSubjectIds, selectedId, hoveredId, resetKey, onSelect, onHover }: Props) {
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState<Status>("checking");
   const [slow, setSlow] = useState(false);
@@ -76,6 +77,7 @@ export function CampusView({ selectedId, hoveredId, resetKey, onSelect, onHover 
         <SceneBoundary key={attempt} onError={onFatal}>
           <Suspense fallback={null}>
             <Scene
+              visibleSubjectIds={visibleSubjectIds}
               selectedId={selectedId}
               hoveredId={hoveredId}
               resetKey={resetKey}
