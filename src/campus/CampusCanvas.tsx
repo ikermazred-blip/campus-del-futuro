@@ -11,6 +11,7 @@ import { CampusGrounds } from "./scene/CampusGrounds";
 import { CameraRig } from "./scene/CameraRig";
 
 export interface CampusCanvasProps {
+  visibleSubjectIds: SubjectId[];
   selectedId: SubjectId | null;
   hoveredId: SubjectId | null;
   resetKey: number;
@@ -95,15 +96,16 @@ function ReadySignal({ onReady, onFatal }: { onReady: () => void; onFatal: (m: s
 }
 
 const World = memo(function World({
+  visibleSubjectIds,
   selectedId,
   hoveredId,
   onSelect,
   onHover,
-}: Pick<CampusCanvasProps, "selectedId" | "hoveredId" | "onSelect" | "onHover">) {
+}: Pick<CampusCanvasProps, "visibleSubjectIds" | "selectedId" | "hoveredId" | "onSelect" | "onHover">) {
   return (
     <>
       <CampusGrounds />
-      {SUBJECTS.map((subject) => (
+      {SUBJECTS.filter((subject) => visibleSubjectIds.includes(subject.id)).map((subject) => (
         <group key={subject.id} position={[subject.x, 0.08, subject.z]}>
           <CampusClassroom name={subject.name} accent={subject.accent} />
           <Character
@@ -122,7 +124,7 @@ const World = memo(function World({
 });
 
 export default function CampusCanvas(props: CampusCanvasProps) {
-  const { selectedId, hoveredId, resetKey, onSelect, onHover, onReady, onFatal } = props;
+  const { visibleSubjectIds, selectedId, hoveredId, resetKey, onSelect, onHover, onReady, onFatal } = props;
   const initial = useMemo(() => overviewPose(FOV, window.innerWidth / Math.max(1, window.innerHeight)), []);
   const clearCursor = useCallback(() => {
     document.body.style.cursor = "";
@@ -145,7 +147,7 @@ export default function CampusCanvas(props: CampusCanvasProps) {
       role="img"
     >
       <Lighting />
-      <World selectedId={selectedId} hoveredId={hoveredId} onSelect={onSelect} onHover={onHover} />
+      <World visibleSubjectIds={visibleSubjectIds} selectedId={selectedId} hoveredId={hoveredId} onSelect={onSelect} onHover={onHover} />
       <OrbitControls
         makeDefault
         target={initial.target}

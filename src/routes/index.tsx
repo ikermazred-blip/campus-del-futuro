@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { GraduationCap, List, Move3d, RotateCcw, UserRoundPen, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getSubject, isSubjectId, type SubjectId } from "@/campus/subjects";
+import { getSubject, isSubjectId, SUBJECTS, type SubjectId } from "@/campus/subjects";
 import { getSubjectTutor } from "@/campus/subjectTutors";
 import { CampusView } from "@/campus/CampusView";
 import { AssistantList } from "@/campus/ui/AssistantList";
@@ -64,13 +64,36 @@ const ELECTIVE_OPTIONS = [
   "Tecnologías de la Información y la Comunicación",
 ];
 
+const ELECTIVE_SUBJECT_IDS: Record<string, SubjectId> = {
+  "Biología": "biologia",
+  "Dibujo Técnico": "dibujo-tecnico",
+  "Física": "fisica",
+  "Química": "quimica",
+  "Tecnología e Ingeniería": "tecnologia-ingenieria",
+  "Economía": "economia",
+  "Historia del Mundo Contemporáneo": "historia",
+  "Matemáticas Aplicadas a las Ciencias Sociales": "matematicas",
+};
+
+function getVisibleSubjectIds(profile: StudentProfile | null): SubjectId[] {
+  if (!profile) return SUBJECTS.map((subject) => subject.id);
+  const visible = new Set<SubjectId>(["lengua", "filosofia", "ingles"]);
+  if (profile.modality === "Bachillerato de Ciencias y Tecnología") visible.add("matematicas");
+  profile.electives.forEach((elective) => {
+    const subjectId = ELECTIVE_SUBJECT_IDS[elective];
+    if (subjectId) visible.add(subjectId);
+  });
+  return SUBJECTS.filter((subject) => visible.has(subject.id)).map((subject) => subject.id);
+}
+
 function Home() {
   const { asignatura } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const selected = getSubject(asignatura);
   const [hoveredId, setHoveredId] = useState<SubjectId | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const visibleSubjectIds = useMemo(() => getVisibleSubjectIds(profile), [profile]);
+  const selected = visibleSubjectIds.includes(asignatura as SubjectId) ? getSubject(asignatura) : undefined;
   const [profileReady, setProfileReady] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [showEntryReminder, setShowEntryReminder] = useState(false);
@@ -140,7 +163,7 @@ function Home() {
       </a>
       <section id="campus" aria-label="Campus 3D de asignaturas" className="relative h-[88svh] min-h-[600px] w-full overflow-hidden bg-sky">
         <ClientOnly fallback={null}>
-          <CampusView selectedId={asignatura ?? null} hoveredId={hoveredId} resetKey={resetKey} onSelect={onSelect} onHover={onHover} />
+          <CampusView visibleSubjectIds={visibleSubjectIds} selectedId={visibleSubjectIds.includes(asignatura as SubjectId) ? (asignatura ?? null) : null} hoveredId={hoveredId} resetKey={resetKey} onSelect={onSelect} onHover={onHover} />
         </ClientOnly>
 
         <header className="scene-fade-top pointer-events-none absolute inset-x-0 top-0 z-10 px-4 pb-10 pt-4 sm:px-6 sm:pt-5">
@@ -263,7 +286,7 @@ function Home() {
         </div>
       )}
 
-      <StudentWorkspace initialTab="agenda" embedded />
+      <StudentWorkspace initialTab="agenda" embedded visibleSubjectIds={visibleSubjectIds} />
       <AssistantList onShowInCampus={() => document.getElementById("campus")?.scrollIntoView({ behavior: "smooth" })} />
 
       <footer className="border-t px-4 py-8 text-center text-sm text-muted-foreground">SCHOOL AI WORLD · Tu campus de asignaturas y estudio</footer>
