@@ -103,7 +103,7 @@ const World = memo(function World({
     <>
       {SUBJECTS.map((subject) => (
         <group key={subject.id} position={[subject.x, 0.08, subject.z]}>
-          <CampusClassroom accent={subject.accent} />
+          <CampusClassroom name={subject.name} accent={subject.accent} />
           <Character
             model={subject.model}
             pose={subject.pose}
