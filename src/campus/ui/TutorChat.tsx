@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Archive, ArrowUp, Bot, BookOpen, Check, Clock3, LogIn, LogOut, Plus, Search, Sparkles, Trash2, UserRound } from "lucide-react";
-import { getChatSession, isBackendConfigured, sendTutorMessage, signIn, signOut, type ChatMessage, type ChatSession } from "@/lib/ai/client";
+import { deleteTutorConversation, getChatSession, isBackendConfigured, listTutorConversations, sendTutorMessage, signIn, signOut, type ChatMessage, type ChatSession } from "@/lib/ai/client";
 
 type Conversation = { id: string; remoteId?: string; title: string; agentId: string; messages: ChatMessage[]; updatedAt: string };
 type Props = { agentId: string; title: string; mode: string; description: string };
@@ -29,6 +29,26 @@ export function TutorChat({ agentId, title, mode, description }: Props) {
     setSession(getChatSession()); setLoaded(true);
   }, [agentId]);
   useEffect(() => { if (loaded) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations)); } catch { /* storage quota */ } } }, [conversations, loaded]);
+  useEffect(() => {
+    if (!configured || !session) return;
+    let cancelled = false;
+    listTutorConversations(agentId).then((remote) => {
+      if (cancelled) return;
+      setConversations((current) => {
+        const localOnly = current.filter((item) => item.agentId === agentId && !item.remoteId);
+        const synced: Conversation[] = remote.map((item) => ({
+          id: item.id, remoteId: item.id, agentId: item.agentId, title: item.title,
+          messages: item.messages, updatedAt: item.updatedAt,
+        }));
+        return [...current.filter((item) => item.agentId !== agentId), ...synced, ...localOnly];
+      });
+      setActiveId((current) => current || remote[0]?.id || "");
+    }).catch((error) => {
+      if (!cancelled) setServiceError(error instanceof Error ? error.message : "No se ha podido sincronizar el historial.");
+    });
+    return () => { cancelled = true; };
+  }, [agentId, configured, session?.accessToken]);
+
 
   const agentConversations = useMemo(() => conversations.filter((item) => item.agentId === agentId && item.title.toLocaleLowerCase("es").includes(search.toLocaleLowerCase("es"))).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [conversations, agentId, search]);
   const active = agentConversations.find((item) => item.id === activeId) ?? conversations.find((item) => item.id === activeId);
@@ -50,7 +70,7 @@ export function TutorChat({ agentId, title, mode, description }: Props) {
     } catch (error) { setServiceError(error instanceof Error ? error.message : "No se ha podido conectar con el servicio de IA."); }
     finally { setSending(false); }
   };
-  const removeConversation = (id: string) => { setConversations((items) => items.filter((item) => item.id !== id)); if (activeId === id) setActiveId(""); };
+  const removeConversation = (id: string) => {\n    const item = conversations.find((entry) => entry.id === id);\n    if (item?.remoteId && configured && session) void deleteTutorConversation(item.remoteId).catch((error) => setServiceError(error instanceof Error ? error.message : "No se ha podido borrar en la nube."));\n    setConversations((items) => items.filter((entry) => entry.id !== id));\n    if (activeId === id) setActiveId("");\n  };
   const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault(); setAuthBusy(true); setServiceError("");
     try { const next = await signIn(email.trim(), password); setSession(next); setPassword(""); }
