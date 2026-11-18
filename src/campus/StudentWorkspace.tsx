@@ -96,8 +96,10 @@ async function downloadBlob(key: string) {
   }
 }
 
-export function StudentWorkspace() {
-  const [tab, setTab] = useState<Tab>("subjects");
+interface StudentWorkspaceProps { initialTab?: Tab; embedded?: boolean; }
+
+export function StudentWorkspace({ initialTab = "subjects", embedded = false }: StudentWorkspaceProps) {
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [subjects, setSubjects] = useState<Subject[]>(DEFAULT_SUBJECTS.map((name) => ({ id: name, name })));
   const [events, setEvents] = useState<EventItem[]>([]);
   const [records, setRecords] = useState<StudyRecord[]>([]);
@@ -176,7 +178,7 @@ export function StudentWorkspace() {
   };
 
   return (
-    <section id="espacio-estudio" className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6">
+    <section id={embedded ? "agenda" : "espacio-estudio"} className={`mx-auto w-full max-w-7xl px-4 sm:px-6 ${embedded ? "py-8" : "py-12"}`}>
       <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div><p className="text-xs font-bold uppercase tracking-[.2em] text-primary">Tu espacio académico</p><h2 className="mt-1 text-3xl font-semibold sm:text-4xl">Mi espacio de estudio</h2><p className="mt-2 max-w-2xl text-sm text-muted-foreground">Organiza asignaturas, agenda, materiales y progreso desde un único lugar.</p></div>
         <div className="rounded-xl border bg-card px-4 py-3 text-sm"><strong>{subjects.length}</strong> asignaturas · <strong>{events.filter(e => !e.done).length}</strong> eventos pendientes · <strong>{completed}</strong> temas estudiados</div>
