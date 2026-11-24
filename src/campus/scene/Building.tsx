@@ -318,7 +318,7 @@ function BuildingImpl({ spec, assistant, hovered, selected, onHover, onSelect }:
         <InstancedBoxes items={outline} material={mats.outline} castShadow={false} receiveShadow={false} />
       </group>
       </group>
-      {selected && <Interior spec={spec} assistant={assistant} facade={mats.facade} cardOpen={false} onOpenCard={() => undefined} />}
+      {selected && <Interior spec={spec} assistant={assistant} facade={mats.facade} cardOpen={false} onOpenCard={() => onSelect(spec.id)} />}
     </group>
   );
 }
