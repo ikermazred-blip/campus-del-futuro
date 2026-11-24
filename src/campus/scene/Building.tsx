@@ -8,6 +8,8 @@ import { getTexture, makeSignTexture, scaledBox, TILE } from "../textures";
 import { getMaterials } from "../materials";
 import { InstancedBoxes } from "./InstancedBoxes";
 import { Interior } from "./Interior";
+import { Character } from "./Character";
+import { FLOOR_Y, ROOMS } from "../rooms";
 
 interface Props {
   spec: BuildingSpec;
@@ -280,7 +282,7 @@ function BuildingImpl({ spec, assistant, hovered, selected, onHover, onSelect }:
       )}
 
       {/* entrance lobby */}
-      <mesh geometry={geo.lobby} material={mats.facade} position={[0, lobbyH / 2, d / 2 + LOBBY_DEPTH / 2]} castShadow receiveShadow />
+      <mesh visible={false} geometry={geo.lobby} material={mats.facade} position={[0, lobbyH / 2, d / 2 + LOBBY_DEPTH / 2]} castShadow receiveShadow />
       <mesh material={M.concreteDark} position={[0, 0.22, d / 2 + LOBBY_DEPTH / 2 + 0.6]} receiveShadow>
         <boxGeometry args={[lw + 0.6, 0.45, LOBBY_DEPTH + 1.2]} />
       </mesh>
@@ -318,7 +320,20 @@ function BuildingImpl({ spec, assistant, hovered, selected, onHover, onSelect }:
         <InstancedBoxes items={outline} material={mats.outline} castShadow={false} receiveShadow={false} />
       </group>
       </group>
-      {selected && <Interior spec={spec} assistant={assistant} facade={mats.facade} cardOpen={false} onOpenCard={() => undefined} />}
+      {!selected && (
+        <group position={[0, FLOOR_Y, d / 2 + LOBBY_DEPTH / 2]} name={`Personaje visible: ${assistant.name}`}>
+          <Character
+            model={ROOMS[spec.id].character.model}
+            pose={ROOMS[spec.id].character.pose}
+            name={assistant.name}
+            accent={spec.accent}
+            active={hovered}
+            hint="Pulsa para entrar en su edificio"
+            onActivate={() => onSelect(spec.id)}
+          />
+        </group>
+      )}
+      {selected && <Interior spec={spec} assistant={assistant} facade={mats.facade} cardOpen={false} onOpenCard={() => onSelect(spec.id)} />}
     </group>
   );
 }

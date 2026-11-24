@@ -1,15 +1,13 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { AlertTriangle, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { SubjectId } from "./subjects";
+import type { AssistantId } from "./assistants";
 
 interface Props {
-  visibleSubjectIds: SubjectId[];
-  selectedId: SubjectId | null;
-  hoveredId: SubjectId | null;
-  resetKey: number;
-  onSelect: (id: SubjectId) => void;
-  onHover: (id: SubjectId | null) => void;
+  selectedId: AssistantId | null;
+  hoveredId: AssistantId | null;
+  onSelect: (id: AssistantId) => void;
+  onHover: (id: AssistantId | null) => void;
 }
 
 type Status = "checking" | "loading" | "ready" | "unsupported" | "error";
@@ -39,7 +37,7 @@ class SceneBoundary extends Component<{ onError: (m: string) => void; children: 
 }
 
 /** Client-only 3D campus with WebGL detection, loading timeout, error fallback and retry. */
-export function CampusView({ visibleSubjectIds, selectedId, hoveredId, resetKey, onSelect, onHover }: Props) {
+export function CampusView({ selectedId, hoveredId, onSelect, onHover }: Props) {
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState<Status>("checking");
   const [slow, setSlow] = useState(false);
@@ -77,10 +75,8 @@ export function CampusView({ visibleSubjectIds, selectedId, hoveredId, resetKey,
         <SceneBoundary key={attempt} onError={onFatal}>
           <Suspense fallback={null}>
             <Scene
-              visibleSubjectIds={visibleSubjectIds}
               selectedId={selectedId}
               hoveredId={hoveredId}
-              resetKey={resetKey}
               onSelect={onSelect}
               onHover={onHover}
               onReady={onReady}

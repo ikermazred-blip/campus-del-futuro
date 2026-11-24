@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MapPin, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ASSISTANTS, type AssistantId } from "../assistants";
@@ -6,11 +6,13 @@ import { TutorChat } from "./TutorChat";
 
 interface Props {
   onShowInCampus: (id: AssistantId) => void;
+  openAssistantId?: AssistantId | null;
 }
 
-export function AssistantList({ onShowInCampus }: Props) {
+export function AssistantList({ onShowInCampus, openAssistantId = null }: Props) {
   const [activeAssistant, setActiveAssistant] = useState<AssistantId | null>(null);
   const selectedAssistant = ASSISTANTS.find((assistant) => assistant.id === activeAssistant);
+  useEffect(() => { if (openAssistantId) setActiveAssistant(openAssistantId); }, [openAssistantId]);
   return (
     <section id="asistentes" aria-labelledby="asistentes-titulo" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:py-20">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Acceso directo</p>

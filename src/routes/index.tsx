@@ -3,6 +3,7 @@ import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { GraduationCap, List, Move3d, RotateCcw, UserRoundPen, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSubject, isSubjectId, SUBJECTS, type SubjectId } from "@/campus/subjects";
+import { getAssistant, type AssistantId } from "@/campus/assistants";
 import { getSubjectTutor } from "@/campus/subjectTutors";
 import { CampusView } from "@/campus/CampusView";
 import { AssistantList } from "@/campus/ui/AssistantList";
@@ -90,6 +91,9 @@ function Home() {
   const { asignatura } = Route.useSearch();
   const navigate = Route.useNavigate();
   const [hoveredId, setHoveredId] = useState<SubjectId | null>(null);
+  const [selectedAssistantId, setSelectedAssistantId] = useState<AssistantId | null>(null);
+  const [chatAssistantId, setChatAssistantId] = useState<AssistantId | null>(null);
+  const [hoveredAssistantId, setHoveredAssistantId] = useState<AssistantId | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const visibleSubjectIds = useMemo(() => getVisibleSubjectIds(profile), [profile]);
@@ -138,7 +142,8 @@ function Home() {
   const toggleElective = (name: string) => {
     setDraftElectives((current) => current.includes(name) ? current.filter((item) => item !== name) : [...current, name]);
   };
-  const hovered = getSubject(hoveredId);
+  const hoveredAssistant = getAssistant(hoveredAssistantId);
+  const selectedAssistant = getAssistant(selectedAssistantId);
 
   const select = useCallback(
     (id: SubjectId | null) => {
@@ -146,11 +151,15 @@ function Home() {
     },
     [navigate],
   );
-  const onSelect = useCallback((id: SubjectId) => select(id), [select]);
-  const onHover = useCallback((id: SubjectId | null) => setHoveredId(id), []);
+  const onSelectAssistant = useCallback((id: AssistantId) => setSelectedAssistantId(id), []);
+  const onHoverAssistant = useCallback((id: AssistantId | null) => setHoveredAssistantId(id), []);
+  const showAssistantInCampus = useCallback((id: AssistantId) => {
+    setSelectedAssistantId(id);
+    document.getElementById("campus")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
   const overview = () => {
     select(null);
-    setResetKey((k) => k + 1);
+    setSelectedAssistantId(null);
   };
 
   return (
@@ -161,16 +170,16 @@ function Home() {
       >
         Ir a la agenda
       </a>
-      <section id="campus" aria-label="Campus 3D de asignaturas" className="relative h-[88svh] min-h-[600px] w-full overflow-hidden bg-sky">
+      <section id="campus" aria-label="Campus 3D de seis asistentes generales" className="relative h-[88svh] min-h-[600px] w-full overflow-hidden bg-sky">
         <ClientOnly fallback={null}>
-          <CampusView visibleSubjectIds={visibleSubjectIds} selectedId={visibleSubjectIds.includes(asignatura as SubjectId) ? (asignatura ?? null) : null} hoveredId={hoveredId} resetKey={resetKey} onSelect={onSelect} onHover={onHover} />
+          <CampusView selectedId={selectedAssistantId} hoveredId={hoveredAssistantId} onSelect={onSelectAssistant} onHover={onHoverAssistant} />
         </ClientOnly>
 
         <header className="scene-fade-top pointer-events-none absolute inset-x-0 top-0 z-10 px-4 pb-10 pt-4 sm:px-6 sm:pt-5">
           <div className="flex items-start justify-between gap-3">
             <div className="glass-panel pointer-events-auto rounded-2xl px-4 py-3 sm:px-5">
               <h1 className="text-xl font-semibold tracking-[0.06em] sm:text-2xl">SCHOOL AI WORLD</h1>
-              <p className="text-sm text-muted-foreground sm:text-base">Elige una asignatura y entra con su personaje</p>
+              <p className="text-sm text-muted-foreground sm:text-base">Explora los seis edificios y entra en cada espacio de aprendizaje</p>
             </div>
             <div className="pointer-events-auto flex flex-col gap-2 sm:flex-row">
               <Button variant="glass" onClick={() => {
@@ -209,12 +218,22 @@ function Home() {
           <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-4" aria-hidden>
             <div className="glass-panel flex items-center gap-2 rounded-full px-4 py-2 text-sm">
               <Move3d className="size-4 text-primary" />
-              {hovered ? (
-                <span><strong>{hovered.name}</strong> · pulsa el personaje para entrar</span>
+              {hoveredAssistant ? (
+                <span><strong>{hoveredAssistant.name}</strong> · pulsa su personaje para entrar</span>
               ) : (
                 <span>Arrastra para girar · Rueda o pellizca para acercar · Pulsa un personaje</span>
               )}
             </div>
+          </div>
+        )}
+
+        {selectedAssistant && (
+          <div className="glass-panel pointer-events-auto absolute bottom-5 left-1/2 z-20 w-[min(92%,440px)] -translate-x-1/2 rounded-2xl p-4 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div><p className="text-xs font-semibold uppercase tracking-[.16em] text-primary">Edificio seleccionado</p><h2 className="mt-1 text-xl font-semibold">{selectedAssistant.name}</h2><p className="mt-1 text-sm text-muted-foreground">{selectedAssistant.description}</p></div>
+              <button type="button" onClick={() => setSelectedAssistantId(null)} className="rounded-full p-2 hover:bg-muted" aria-label="Volver a la vista general"><X size={18}/></button>
+            </div>
+            <Button className="mt-3 w-full" onClick={() => { setChatAssistantId(selectedAssistant.id); document.getElementById("asistentes")?.scrollIntoView({ behavior: "smooth" }); }}>Abrir chat de este asistente</Button>
           </div>
         )}
 
@@ -287,7 +306,7 @@ function Home() {
       )}
 
       <StudentWorkspace initialTab="agenda" embedded visibleSubjectIds={visibleSubjectIds} />
-      <AssistantList onShowInCampus={() => document.getElementById("campus")?.scrollIntoView({ behavior: "smooth" })} />
+      <AssistantList onShowInCampus={showAssistantInCampus} openAssistantId={chatAssistantId} />
 
       <footer className="border-t px-4 py-8 text-center text-sm text-muted-foreground">SCHOOL AI WORLD · Tu campus de asignaturas y estudio</footer>
     </main>
