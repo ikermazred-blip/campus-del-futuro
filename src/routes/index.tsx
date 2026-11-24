@@ -142,7 +142,7 @@ function Home() {
   const toggleElective = (name: string) => {
     setDraftElectives((current) => current.includes(name) ? current.filter((item) => item !== name) : [...current, name]);
   };
-  const hovered = getSubject(hoveredId);
+  const hoveredAssistant = getAssistant(hoveredAssistantId);
   const selectedAssistant = getAssistant(selectedAssistantId);
 
   const select = useCallback(
@@ -151,8 +151,6 @@ function Home() {
     },
     [navigate],
   );
-  const onSelect = useCallback((id: SubjectId) => select(id), [select]);
-  const onHover = useCallback((id: SubjectId | null) => setHoveredId(id), []);
   const onSelectAssistant = useCallback((id: AssistantId) => setSelectedAssistantId(id), []);
   const onHoverAssistant = useCallback((id: AssistantId | null) => setHoveredAssistantId(id), []);
   const showAssistantInCampus = useCallback((id: AssistantId) => {
@@ -161,7 +159,7 @@ function Home() {
   }, []);
   const overview = () => {
     select(null);
-    setResetKey((k) => k + 1);
+    setSelectedAssistantId(null);
   };
 
   return (
@@ -220,8 +218,8 @@ function Home() {
           <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-4" aria-hidden>
             <div className="glass-panel flex items-center gap-2 rounded-full px-4 py-2 text-sm">
               <Move3d className="size-4 text-primary" />
-              {hovered ? (
-                <span><strong>{hovered.name}</strong> · pulsa el personaje para entrar</span>
+              {hoveredAssistant ? (
+                <span><strong>{hoveredAssistant.name}</strong> · pulsa su personaje para entrar</span>
               ) : (
                 <span>Arrastra para girar · Rueda o pellizca para acercar · Pulsa un personaje</span>
               )}
