@@ -282,7 +282,7 @@ function BuildingImpl({ spec, assistant, hovered, selected, onHover, onSelect }:
       )}
 
       {/* entrance lobby */}
-      <mesh geometry={geo.lobby} material={mats.facade} position={[0, lobbyH / 2, d / 2 + LOBBY_DEPTH / 2]} castShadow receiveShadow />
+      <mesh visible={false} geometry={geo.lobby} material={mats.facade} position={[0, lobbyH / 2, d / 2 + LOBBY_DEPTH / 2]} castShadow receiveShadow />
       <mesh material={M.concreteDark} position={[0, 0.22, d / 2 + LOBBY_DEPTH / 2 + 0.6]} receiveShadow>
         <boxGeometry args={[lw + 0.6, 0.45, LOBBY_DEPTH + 1.2]} />
       </mesh>
