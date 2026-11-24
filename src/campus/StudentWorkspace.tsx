@@ -40,19 +40,30 @@ function mondayOf(date: Date) {
 function dateKey(d: Date) { return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-"); }
 function parseNatural(text: string, subjects: Subject[]): Omit<EventItem, "id" | "done"> | null {
   const lower = text.toLocaleLowerCase("es");
-  const days = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
-  const dayIndex = days.findIndex((d) => lower.includes(d));
-  const time = lower.match(/(?:a las |sobre las )?(\d{1,2})(?::(\d{2}))?\s*(?:h|horas)?/);
-  if (dayIndex < 0 || !time) return null;
-  const now = new Date();
-  const date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const normalized = lower.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const days = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
+  const dayIndex = days.findIndex((day) => new RegExp(`\\b${day}\\b`).test(normalized));
+  const startMatch = normalized.match(/\\b(?:de|a las|sobre las|para las)\\s*(\\d{1,2})(?::(\\d{2}))?\\s*(?:h|horas)?\\b/)
+    ?? normalized.match(/\\b(\\d{1,2}):(\\d{2})\\b/)
+    ?? normalized.match(/\\b(\\d{1,2})\\s*(?:h|horas)\\b/);
+  if (dayIndex < 0 || !startMatch) return null;
+  const hour = Number(startMatch[1]);
+  const minute = Number(startMatch[2] ?? "0");
+  if (hour > 23 || minute > 59) return null;
+  const date = todayInMadrid();
   const delta = (dayIndex - date.getDay() + 7) % 7 || 7;
   date.setDate(date.getDate() + delta);
-  const start = String(Number(time[1])).padStart(2, "0") + ":" + (time[2] ?? "00");
-  const subject = subjects.find((s) => lower.includes(s.name.toLocaleLowerCase("es")));
-  const type = lower.includes("examen") ? "Examen" : lower.includes("entrega") ? "Entrega" : lower.includes("clase") ? "Clase" : lower.includes("estudi") ? "Estudio" : "Tarea";
-  const title = text.trim().replace(/^(la semana que viene|la próxima semana|el )/i, "").slice(0, 100);
-  return { title: title || type, subject: subject?.name ?? "", type, date: dateKey(date), start, end: "", notes: "" };
+  const start = String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
+  const endMatch = normalized.match(/\\b(?:hasta|a)\\s*(\\d{1,2})(?::(\\d{2}))?\\s*(?:h|horas)?\\b/);
+  const endHour = endMatch ? Number(endMatch[1]) : NaN;
+  const endMinute = endMatch ? Number(endMatch[2] ?? "0") : 0;
+  const end = endMatch && endHour <= 23 && endMinute <= 59
+    ? String(endHour).padStart(2, "0") + ":" + String(endMinute).padStart(2, "0")
+    : "";
+  const subject = subjects.find((s) => normalized.includes(s.name.toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "")));
+  const type = normalized.includes("examen") ? "Examen" : normalized.includes("entrega") ? "Entrega" : normalized.includes("clase") ? "Clase" : normalized.includes("estudi") ? "Estudio" : "Tarea";
+  const title = text.trim().slice(0, 100);
+  return { title: title || type, subject: subject?.name ?? "", type, date: dateKey(date), start, end, notes: "" };
 }
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -120,6 +131,9 @@ export function StudentWorkspace({ initialTab = "subjects", embedded = false, vi
   const [eventTitle, setEventTitle] = useState("");
   const [eventDate, setEventDate] = useState(dateKey(new Date()));
   const [eventTime, setEventTime] = useState("09:00");
+  const [eventEnd, setEventEnd] = useState("");
+  const [eventNotes, setEventNotes] = useState("");
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [eventSubject, setEventSubject] = useState(DEFAULT_SUBJECTS[0] ?? "Matemáticas");
   const [eventType, setEventType] = useState("Examen");
   const [fileSubject, setFileSubject] = useState(DEFAULT_SUBJECTS[0] ?? "Matemáticas");
@@ -196,6 +210,33 @@ export function StudentWorkspace({ initialTab = "subjects", embedded = false, vi
     if (!data.title.trim() || !data.date) return;
     setEvents((v) => [...v, { ...data, id: id(), done: false }]); setPreview(null); setEventTitle(""); setNotice("Evento guardado en esta instalación.");
   };
+  const startEditingEvent = (event: EventItem) => {
+    setEditingEventId(event.id);
+    setEventTitle(event.title);
+    setEventDate(event.date);
+    setEventTime(event.start || "09:00");
+    setEventEnd(event.end || "");
+    setEventType(event.type);
+    setEventSubject(event.subject);
+    setEventNotes(event.notes || "");
+    setNotice("Editando evento. Modifica los campos y guarda los cambios.");
+  };
+  const saveManualEvent = () => {
+    if (!eventTitle.trim() || !eventDate) return;
+    const data = { title: eventTitle.trim(), subject: eventSubject, type: eventType, date: eventDate, start: eventTime, end: eventEnd, notes: eventNotes.trim() };
+    if (editingEventId) {
+      setEvents((items) => items.map((item) => item.id === editingEventId ? { ...item, ...data } : item));
+      setNotice("Cambios del evento guardados.");
+      setEditingEventId(null);
+      setEventTitle("");
+      setEventEnd("");
+      setEventNotes("");
+    } else {
+      addEvent(data);
+      setEventEnd("");
+      setEventNotes("");
+    }
+  };
   const makePreview = () => {
     const result = parseNatural(natural, visibleSubjects);
     if (!result) { setNotice("No he podido identificar un día de la semana y una hora. Usa el formulario para introducirlos manualmente."); return; }
@@ -250,9 +291,9 @@ export function StudentWorkspace({ initialTab = "subjects", embedded = false, vi
       </div>}
 
       {tab === "agenda" && <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
-        <div className="rounded-2xl border bg-card p-4 sm:p-5"><div className="mb-4 flex items-center justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Calendario semanal</p><h3 className="text-xl font-semibold">{weekStart.toLocaleDateString("es-ES",{month:"long",year:"numeric"})}</h3><p className="mt-1 text-xs text-muted-foreground">Guardado automático en este navegador</p></div><div className="flex gap-2"><button onClick={()=>setWeekOffset(v=>v-1)} className="rounded-lg border px-3 py-2" aria-label="Semana anterior">←</button><button onClick={()=>setWeekOffset(0)} className="rounded-lg border px-3 py-2 text-sm">Hoy</button><button onClick={()=>setWeekOffset(v=>v+1)} className="rounded-lg border px-3 py-2" aria-label="Semana siguiente">→</button></div></div><div className="grid grid-cols-7 gap-1">{weekDays.map(d=><div key={dateKey(d)} className="min-w-0 rounded-lg bg-muted/60 p-1.5 sm:p-2"><div className="text-center text-[10px] font-semibold uppercase sm:text-xs">{d.toLocaleDateString("es-ES",{weekday:"short"})}</div><div className="mb-2 text-center text-sm font-bold">{d.getDate()}</div><div className="space-y-1">{events.filter(e=>e.date===dateKey(d)).map(e=><div key={e.id} className={`rounded-md p-1 text-[9px] leading-tight sm:text-xs ${e.done?"bg-emerald-100 text-emerald-900 opacity-60":"bg-primary/10 text-foreground"}`}><div className="font-bold">{e.start||"—"}</div><div className="break-words">{e.title}</div><button onClick={()=>setEvents(v=>v.map(x=>x.id===e.id?{...x,done:!x.done}:x))} className="mt-1 underline">{e.done?"Reabrir":"Completar"}</button><button onClick={()=>{const title=prompt("Editar título del evento",e.title);if(title?.trim())setEvents(v=>v.map(x=>x.id===e.id?{...x,title:title.trim()}:x));}} className="ml-1 underline">Editar</button><button onClick={()=>setEvents(v=>v.filter(x=>x.id!==e.id))} className="ml-1 underline">Borrar</button></div>)}</div></div>)}</div></div>
+        <div className="rounded-2xl border bg-card p-4 sm:p-5"><div className="mb-4 flex items-center justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Calendario semanal</p><h3 className="text-xl font-semibold">{weekStart.toLocaleDateString("es-ES",{month:"long",year:"numeric"})}</h3><p className="mt-1 text-xs text-muted-foreground">Guardado automático en este navegador</p></div><div className="flex gap-2"><button onClick={()=>setWeekOffset(v=>v-1)} className="rounded-lg border px-3 py-2" aria-label="Semana anterior">←</button><button onClick={()=>setWeekOffset(0)} className="rounded-lg border px-3 py-2 text-sm">Hoy</button><button onClick={()=>setWeekOffset(v=>v+1)} className="rounded-lg border px-3 py-2" aria-label="Semana siguiente">→</button></div></div><div className="grid grid-cols-7 gap-1">{weekDays.map(d=><div key={dateKey(d)} className="min-w-0 rounded-lg bg-muted/60 p-1.5 sm:p-2"><div className="text-center text-[10px] font-semibold uppercase sm:text-xs">{d.toLocaleDateString("es-ES",{weekday:"short"})}</div><div className="mb-2 text-center text-sm font-bold">{d.getDate()}</div><div className="space-y-1">{events.filter(e=>e.date===dateKey(d)).map(e=><div key={e.id} className={`rounded-md p-1 text-[9px] leading-tight sm:text-xs ${e.done?"bg-emerald-100 text-emerald-900 opacity-60":"bg-primary/10 text-foreground"}`}><div className="font-bold">{e.start||"—"}</div><div className="break-words">{e.title}</div><button onClick={()=>setEvents(v=>v.map(x=>x.id===e.id?{...x,done:!x.done}:x))} className="mt-1 underline">{e.done?"Reabrir":"Completar"}</button><button onClick={()=>startEditingEvent(e)} className="ml-1 underline">Editar</button><button onClick={()=>setEvents(v=>v.filter(x=>x.id!==e.id))} className="ml-1 underline">Borrar</button></div>)}</div></div>)}</div></div>
         <aside className="space-y-4"><div className="rounded-2xl border bg-card p-4"><h3 className="font-semibold">Añadir con lenguaje natural</h3><textarea value={natural} onChange={e=>setNatural(e.target.value)} rows={3} placeholder="El martes a las 9:00 tengo un examen de Matemáticas" className="mt-3 w-full rounded-lg border bg-background p-3 text-sm"/><button onClick={makePreview} className="mt-2 w-full rounded-lg border px-3 py-2 text-sm font-semibold">Interpretar y revisar</button>{preview&&<div className="mt-3 rounded-lg bg-muted p-3 text-sm"><strong>Vista previa</strong><p>{preview.title}</p><p>{preview.type} · {preview.subject||"Sin asignatura"}</p><p>{preview.date} · {preview.start}</p><button onClick={()=>addEvent(preview)} className="mt-2 w-full rounded-lg bg-primary px-3 py-2 font-semibold text-primary-foreground">Confirmar y guardar</button></div>}</div>
-        <div className="rounded-2xl border bg-card p-4"><h3 className="font-semibold">Crear evento manual</h3><div className="mt-3 space-y-2"><input value={eventTitle} onChange={e=>setEventTitle(e.target.value)} placeholder="Título" className="w-full rounded-lg border bg-background px-3 py-2 text-sm"/><select value={eventType} onChange={e=>setEventType(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm">{["Examen","Tarea","Entrega","Estudio","Clase","Otro"].map(x=><option key={x}>{x}</option>)}</select><select value={eventSubject} onChange={e=>setEventSubject(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm"><option value="">Sin asignatura</option>{visibleSubjects.map(s=><option key={s.id}>{s.name}</option>)}</select><input type="date" value={eventDate} onChange={e=>setEventDate(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm"/><input type="time" value={eventTime} onChange={e=>setEventTime(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm"/><button onClick={()=>addEvent({title:eventTitle,subject:eventSubject,type:eventType,date:eventDate,start:eventTime,end:"",notes:""})} className="w-full rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground">Guardar evento</button></div></div></aside>
+        <div className="rounded-2xl border bg-card p-4"><h3 className="font-semibold">{editingEventId ? "Editar evento" : "Crear evento manual"}</h3><div className="mt-3 space-y-2"><input value={eventTitle} onChange={e=>setEventTitle(e.target.value)} placeholder="Título" className="w-full rounded-lg border bg-background px-3 py-2 text-sm"/><select value={eventType} onChange={e=>setEventType(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm">{["Examen","Tarea","Entrega","Estudio","Clase","Otro"].map(x=><option key={x}>{x}</option>)}</select><select value={eventSubject} onChange={e=>setEventSubject(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm"><option value="">Sin asignatura</option>{visibleSubjects.map(s=><option key={s.id}>{s.name}</option>)}</select><input type="date" value={eventDate} onChange={e=>setEventDate(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm"/><input type="time" value={eventTime} onChange={e=>setEventTime(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm"/><label className="block text-xs text-muted-foreground">Hora de finalización (opcional)</label><input type="time" value={eventEnd} onChange={e=>setEventEnd(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm"/><textarea value={eventNotes} onChange={e=>setEventNotes(e.target.value)} rows={2} placeholder="Notas (opcional)" className="w-full rounded-lg border bg-background p-3 text-sm"/><button onClick={saveManualEvent} className="w-full rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground">{editingEventId ? "Guardar cambios" : "Guardar evento"}</button>{editingEventId && <button onClick={()=>{setEditingEventId(null);setEventTitle("");setEventEnd("");setEventNotes("");}} className="w-full rounded-lg border px-3 py-2 text-sm">Cancelar edición</button>}</div></div></aside>
       </div>}
 
       {tab === "progress" && <div className="grid gap-5 lg:grid-cols-[320px_1fr]"><div className="rounded-2xl border bg-card p-5"><h3 className="font-semibold">Registrar aprendizaje</h3><p className="mt-1 text-sm text-muted-foreground">Añade temas reales que hayas estudiado o que tengas pendientes.</p><div className="mt-4 space-y-3"><select value={recordSubject} onChange={e=>setRecordSubject(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm">{visibleSubjects.map(s=><option key={s.id}>{s.name}</option>)}</select><input value={topic} onChange={e=>setTopic(e.target.value)} placeholder="Tema o contenido" className="w-full rounded-lg border bg-background px-3 py-2 text-sm"/><select value={recordStatus} onChange={e=>setRecordStatus(e.target.value as "estudiado"|"pendiente")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm"><option value="estudiado">Estudiado</option><option value="pendiente">Pendiente</option></select><input type="number" min="0" max="10" step="0.1" value={score} onChange={e=>setScore(e.target.value)} placeholder="Nota opcional (0–10)" className="w-full rounded-lg border bg-background px-3 py-2 text-sm"/><button onClick={addRecord} className="w-full rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground">Guardar progreso</button></div></div><div className="rounded-2xl border bg-card p-5"><h3 className="font-semibold">Resumen académico</h3><div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3"><div className="rounded-xl bg-muted p-4"><div className="text-2xl font-bold">{completed}</div><div className="text-xs text-muted-foreground">Temas estudiados</div></div><div className="rounded-xl bg-muted p-4"><div className="text-2xl font-bold">{records.filter(r=>r.status==="pendiente").length}</div><div className="text-xs text-muted-foreground">Temas pendientes</div></div><div className="rounded-xl bg-muted p-4"><div className="text-2xl font-bold">{events.filter(e=>e.type==="Examen"&&!e.done).length}</div><div className="text-xs text-muted-foreground">Exámenes pendientes</div></div></div><div className="mt-5 space-y-2">{records.slice().reverse().map(r=><div key={r.id} className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm"><div><strong>{r.subject}</strong><p className="text-muted-foreground">{r.topic} · {r.status}</p></div><div className="flex items-center gap-2">{r.score!==undefined&&<span className="font-bold">{r.score}/10</span>}<button aria-label="Eliminar registro" onClick={()=>setRecords(v=>v.filter(x=>x.id!==r.id))} className="text-muted-foreground hover:text-destructive"><Trash2 size={16}/></button></div></div>)}</div></div></div>}
