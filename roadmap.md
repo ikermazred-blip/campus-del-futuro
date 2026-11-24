@@ -1,8 +1,11 @@
 # Roadmap
 
-- [ ] Personajes 3D (CC0) dentro de una estancia por edificio, vista en corte al entrar, tarjeta al pulsar el personaje
-- [ ] Agenda compartida "Mi agenda": vista semanal, próximos eventos, avisos, filtros, editar/borrar/completar
-- [ ] Entrada en lenguaje natural (Europe/Madrid) con previsualización y preguntas si falta información
-- [ ] Persistencia local con repositorio intercambiable (preparado para base de datos / asistentes)
-- [ ] Menú persistente (Campus · Mi agenda · Asistentes), móvil incluido
-- [ ] Verificar: 6 enlaces intactos, personajes seleccionables, CRUD agenda, móvil
+Causa detectada: los personajes del vestíbulo quedan tapados por un cristal opaco y la marquesina; al seleccionar, la cámara se queda demasiado lejos. "Mi agenda" solo desplaza a un panel antiguo.
+
+- [x] Lógica de agenda compartida: tipos, fechas Europe/Madrid, intérprete de frases con preguntas, repositorio localStorage intercambiable, avisos (src/agenda, con pruebas)
+- [ ] Página /agenda (calendario semanal, próximos eventos, filtros, editar/borrar/completar, vista previa editable)
+- [ ] Menú persistente (Campus · Mi agenda · Asistentes) en __root
+- [ ] Personajes visibles: cristal del vestíbulo transparente, marquesina más corta, cámara interior con interiorPose al seleccionar
+- [ ] Tarjeta y lista de asistentes con el enlace Gemini en la misma pestaña (AssistantLink)
+- [ ] Corregir errores de tipos previos (StudentWorkspace, CampusClassroom, TutorChat, lib/ai/client)
+- [ ] Verificar: 6 enlaces, personajes, CRUD agenda con recarga, móvil
