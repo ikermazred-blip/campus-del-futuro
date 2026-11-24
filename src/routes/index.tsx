@@ -92,6 +92,7 @@ function Home() {
   const navigate = Route.useNavigate();
   const [hoveredId, setHoveredId] = useState<SubjectId | null>(null);
   const [selectedAssistantId, setSelectedAssistantId] = useState<AssistantId | null>(null);
+  const [chatAssistantId, setChatAssistantId] = useState<AssistantId | null>(null);
   const [hoveredAssistantId, setHoveredAssistantId] = useState<AssistantId | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
@@ -234,7 +235,7 @@ function Home() {
               <div><p className="text-xs font-semibold uppercase tracking-[.16em] text-primary">Edificio seleccionado</p><h2 className="mt-1 text-xl font-semibold">{selectedAssistant.name}</h2><p className="mt-1 text-sm text-muted-foreground">{selectedAssistant.description}</p></div>
               <button type="button" onClick={() => setSelectedAssistantId(null)} className="rounded-full p-2 hover:bg-muted" aria-label="Volver a la vista general"><X size={18}/></button>
             </div>
-            <Button className="mt-3 w-full" onClick={() => document.getElementById("asistentes")?.scrollIntoView({ behavior: "smooth" })}>Abrir chat de este asistente</Button>
+            <Button className="mt-3 w-full" onClick={() => { setChatAssistantId(selectedAssistant.id); document.getElementById("asistentes")?.scrollIntoView({ behavior: "smooth" }); }}>Abrir chat de este asistente</Button>
           </div>
         )}
 
@@ -307,7 +308,7 @@ function Home() {
       )}
 
       <StudentWorkspace initialTab="agenda" embedded visibleSubjectIds={visibleSubjectIds} />
-      <AssistantList onShowInCampus={showAssistantInCampus} />
+      <AssistantList onShowInCampus={showAssistantInCampus} openAssistantId={chatAssistantId} />
 
       <footer className="border-t px-4 py-8 text-center text-sm text-muted-foreground">SCHOOL AI WORLD · Tu campus de asignaturas y estudio</footer>
     </main>
