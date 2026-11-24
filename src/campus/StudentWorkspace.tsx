@@ -42,10 +42,10 @@ function parseNatural(text: string, subjects: Subject[]): Omit<EventItem, "id" |
   const lower = text.toLocaleLowerCase("es");
   const normalized = lower.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const days = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
-  const dayIndex = days.findIndex((day) => new RegExp(`\\b${day}\\b`).test(normalized));
-  const startMatch = normalized.match(/\\b(?:de|a las|sobre las|para las)\\s*(\\d{1,2})(?::(\\d{2}))?\\s*(?:h|horas)?\\b/)
-    ?? normalized.match(/\\b(\\d{1,2}):(\\d{2})\\b/)
-    ?? normalized.match(/\\b(\\d{1,2})\\s*(?:h|horas)\\b/);
+  const dayIndex = days.findIndex((day) => new RegExp(\`\\b\${day}\\b\`).test(normalized));
+  const startMatch = normalized.match(/\b(?:de|a las|sobre las|para las)\s*(\d{1,2})(?::(\d{2}))?\s*(?:h|horas)?\b/)
+    ?? normalized.match(/\b(\d{1,2}):(\d{2})\b/)
+    ?? normalized.match(/\b(\d{1,2})\s*(?:h|horas)\b/);
   if (dayIndex < 0 || !startMatch) return null;
   const hour = Number(startMatch[1]);
   const minute = Number(startMatch[2] ?? "0");
@@ -54,7 +54,7 @@ function parseNatural(text: string, subjects: Subject[]): Omit<EventItem, "id" |
   const delta = (dayIndex - date.getDay() + 7) % 7 || 7;
   date.setDate(date.getDate() + delta);
   const start = String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
-  const endMatch = normalized.match(/\\b(?:hasta|a)\\s*(\\d{1,2})(?::(\\d{2}))?\\s*(?:h|horas)?\\b/);
+  const endMatch = normalized.match(/\b(?:hasta|a)\s*(\d{1,2})(?::(\d{2}))?\s*(?:h|horas)?\b/);
   const endHour = endMatch ? Number(endMatch[1]) : NaN;
   const endMinute = endMatch ? Number(endMatch[2] ?? "0") : 0;
   const end = endMatch && endHour <= 23 && endMinute <= 59
