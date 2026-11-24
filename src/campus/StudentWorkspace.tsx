@@ -42,7 +42,7 @@ function parseNatural(text: string, subjects: Subject[]): Omit<EventItem, "id" |
   const lower = text.toLocaleLowerCase("es");
   const normalized = lower.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const days = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
-  const dayIndex = days.findIndex((day) => new RegExp(\`\\b\${day}\\b\`).test(normalized));
+  const dayIndex = days.findIndex((day) => normalized.includes(day));
   const startMatch = normalized.match(/\b(?:de|a las|sobre las|para las)\s*(\d{1,2})(?::(\d{2}))?\s*(?:h|horas)?\b/)
     ?? normalized.match(/\b(\d{1,2}):(\d{2})\b/)
     ?? normalized.match(/\b(\d{1,2})\s*(?:h|horas)\b/);
